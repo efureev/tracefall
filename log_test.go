@@ -2,6 +2,7 @@ package traceFall
 
 import (
 	"errors"
+	"fmt"
 	"github.com/satori/go.uuid"
 	. "github.com/smartystreets/goconvey/convey"
 	"reflect"
@@ -146,6 +147,117 @@ func TestLog(t *testing.T) {
 			So(log.Environment, ShouldEqual, EnvironmentProd)
 			log.SetEnvironment(EnvironmentTest)
 			So(log.Environment, ShouldEqual, EnvironmentTest)
+		})
+
+		Convey("Parent", func() {
+			So(log.Parent, ShouldBeNil)
+
+			Convey("set parent ID", func() {
+				parentId := generateUUID()
+
+				log.SetParentId(parentId)
+
+				So(log.Parent, ShouldHaveSameTypeAs, &Log{})
+				So(reflect.ValueOf(log.Parent).Kind(), ShouldEqual, reflect.Ptr)
+
+				So(log.Parent.Id, ShouldHaveSameTypeAs, uuid.UUID{})
+				So(log.Parent.Id, ShouldNotBeNil)
+				So(log.Parent.Id, ShouldEqual, parentId)
+
+				So(log.Parent.Thread, ShouldHaveSameTypeAs, uuid.UUID{})
+				So(log.Parent.Thread, ShouldNotBeNil)
+				So(log.Parent.Thread.String(), ShouldEqual, log.Thread.String())
+				So(log.Parent.Thread, ShouldEqual, log.Thread)
+
+			})
+
+			Convey("set parent Log Struct", func() {
+
+				Convey("valid Parent set", func() {
+					parenLog := NewLog(`ParenLog`)
+					parenLog.Thread = log.Thread
+					err := log.SetParent(parenLog)
+					So(err, ShouldBeNil)
+
+					So(log.Parent, ShouldHaveSameTypeAs, &Log{})
+					So(reflect.ValueOf(log.Parent).Kind(), ShouldEqual, reflect.Ptr)
+
+					So(log.Parent.Id, ShouldHaveSameTypeAs, uuid.UUID{})
+					So(log.Parent.Id, ShouldNotBeNil)
+					So(log.Parent.Id, ShouldEqual, parenLog.Id)
+
+					So(log.Parent.Thread, ShouldHaveSameTypeAs, uuid.UUID{})
+					So(log.Parent.Thread, ShouldNotBeNil)
+					So(log.Parent.Thread, ShouldEqual, log.Thread)
+				})
+
+				Convey("invalid the Parent by Thread", func() {
+					parenLog := NewLog(`ParenLog`)
+
+					err := log.SetParent(parenLog)
+
+					So(err, ShouldBeError)
+					So(log.Parent, ShouldBeNil)
+					So(err, ShouldEqual, ErrorParentThreadDiff)
+				})
+
+				Convey("invalid the Parent by Finish", func() {
+					parenLog := NewLog(`ParenLog`)
+					parenLog.Thread = log.Thread
+					parenLog.ThreadFinish()
+
+					err := log.SetParent(parenLog)
+
+					So(err, ShouldBeError)
+					So(log.Parent, ShouldBeNil)
+					So(err, ShouldEqual, ErrorParentFinish)
+				})
+			})
+
+		})
+
+		Convey("String", func() {
+			So(log.String(), ShouldEqual, fmt.Sprintf("[%s] %s", log.Time, log.Name))
+		})
+
+		Convey("Create Child: Success", func() {
+			timeStart := time.Now()
+
+			child, err := log.CreateChild(`child`)
+			So(err, ShouldBeNil)
+
+			So(child, ShouldHaveSameTypeAs, &Log{})
+			So(reflect.ValueOf(child).Kind(), ShouldEqual, reflect.Ptr)
+
+			So(child.Time, ShouldHappenAfter, timeStart)
+			So(child.Time, ShouldHappenBefore, time.Now())
+
+			So(child.Id, ShouldHaveSameTypeAs, uuid.UUID{})
+			So(child.Id, ShouldNotBeNil)
+
+			So(child.Thread, ShouldHaveSameTypeAs, uuid.UUID{})
+			So(child.Thread, ShouldNotBeNil)
+
+			So(child.Thread, ShouldEqual, log.Thread)
+
+			So(child.Name, ShouldEqual, `child`)
+
+			So(child.App, ShouldEqual, log.App)
+			So(child.Environment, ShouldEqual, log.Environment)
+
+			So(child.Data, ShouldHaveSameTypeAs, ExtraData{})
+			So(child.Notes, ShouldHaveSameTypeAs, NoteGroups{})
+
+			So(child.String(), ShouldEqual, fmt.Sprintf("[%s] %s", child.Time, child.Name))
+		})
+
+		Convey("Create Child: Fail", func() {
+			log.ThreadFinish()
+
+			child, err := log.CreateChild(`child`)
+			So(err, ShouldBeError)
+			So(child, ShouldBeNil)
+			So(err, ShouldEqual, ErrorParentFinish)
 		})
 	})
 }

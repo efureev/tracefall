@@ -1,6 +1,8 @@
 package traceFall
 
 import (
+	"errors"
+	"fmt"
 	"github.com/satori/go.uuid"
 	"time"
 )
@@ -21,6 +23,7 @@ type Log struct {
 	Tags        Tags
 	Error       error
 	Environment string
+	step        uint16
 
 	Result bool
 	Finish bool
@@ -76,6 +79,45 @@ func (l *Log) SetEnvironment(env string) *Log {
 	return l
 }
 
+var ErrorParentFinish = errors.New(`the Parent does not have to be the finish point`)
+var ErrorParentThreadDiff = errors.New(`the Parent Thread is different from the Thread of own log`)
+
+func (l *Log) SetParent(parent *Log) error {
+	if parent.Finish {
+		return ErrorParentFinish
+	}
+
+	if parent.Thread.String() != l.Thread.String() {
+		return ErrorParentThreadDiff
+	}
+
+	l.Parent = parent
+
+	return nil
+}
+
+func (l *Log) SetParentId(id uuid.UUID) *Log {
+	l.Parent = &Log{Id: id, Thread: l.Thread}
+	return l
+}
+
+func (l *Log) CreateChild(name string) (*Log, error) {
+	if l.Finish {
+		return nil, ErrorParentFinish
+	}
+	child := NewLog(name)
+	child.Thread = l.Thread
+	child.App = l.App
+	child.Environment = l.Environment
+	child.Parent = l
+
+	return child, nil
+}
+
+func (l Log) String() string {
+	return fmt.Sprintf("[%s] %s", l.Time, l.Name, )
+}
+
 func (l *Log) SetDefaults() *Log {
 	l.App = `App`
 	l.Environment = EnvironmentDev
@@ -120,21 +162,7 @@ type LogJson struct {
 }
 
 
-func (l *Log) CreateChild(name string) Log {
-	return Log{
-		Id:          generateUUID(),
-		thread:      l.thread,
-		Name:        name,
-		App:         l.App,
-		notes:       NewNotesGroups(),
-		Data:        make(LogExtraParams),
-		Result:      false,
-		Time:        time.Now(),
-		Parent:      l,
-		Tags:        removeDuplicates(append(l.Tags, l.Id.String(), l.thread.String())),
-		Environment: l.Environment,
-	}
-}
+
 
 func (l *Log) CreateChildParams(name string, params LogExtraParams) Log {
 	return Log{
@@ -152,18 +180,6 @@ func (l *Log) CreateChildParams(name string, params LogExtraParams) Log {
 	}
 }
 
-func (l *Log) SetParent(parent *Log) *Log {
-	l.Parent = parent
-	return l
-}
-
-func (l *Log) SetParentId(id uuid.UUID) *Log {
-	l.Parent = &Log{Id: id,}
-	return l
-}
-
-
-
 func (l Log) ToJsonByte() []byte {
 	b, _ := l.MarshalJSON()
 	return b
@@ -172,6 +188,7 @@ func (l Log) ToJsonByte() []byte {
 func (l *Log) MarshalJSON() ([]byte, error) {
 	return json.Marshal(l.ToLogJson())
 }
+
 
 func (l *Log) ToLogJson() LogJson {
 	var (
@@ -213,9 +230,7 @@ func (l *Log) ToLogJson() LogJson {
 	}
 }
 
-func (l Log) String() string {
-	return fmt.Sprintf("[%s] %s > time: %s", l.Id, l.Name, l.Time)
-}
+
 
 type LogShadow struct {
 	Id     uuid.UUID `json:"id"`

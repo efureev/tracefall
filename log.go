@@ -1,6 +1,7 @@
 package traceFall
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/satori/go.uuid"
@@ -13,6 +14,24 @@ const (
 	EnvironmentTest = `test`
 )
 
+type LogJson struct {
+	Id          uuid.UUID    `json:"id"`
+	Thread      uuid.UUID    `json:"thread"`
+	Name        string       `json:"name"`
+	App         string       `json:"app"`
+	Time        int64        `json:"time"`
+	TimeEnd     *int64       `json:"timeEnd"`
+	Result      bool         `json:"result"`
+	Finish      bool         `json:"finish"`
+	Environment string       `json:"env"`
+	Error       *string      `json:"error"`
+	Data        ExtraData    `json:"data"`
+	Notes       []*NoteGroup `json:"notes"`
+	Tags        []string     `json:"tags"`
+	Parent      *string      `json:"parent"`
+	Step        uint16       `json:"step"`
+}
+
 type Log struct {
 	Id          uuid.UUID
 	Thread      uuid.UUID
@@ -23,7 +42,7 @@ type Log struct {
 	Tags        Tags
 	Error       error
 	Environment string
-	step        uint16
+	Step        uint16
 
 	Result bool
 	Finish bool
@@ -35,16 +54,6 @@ type Log struct {
 
 func (l *Log) SetName(name string) *Log {
 	l.Name = name
-	return l
-}
-
-func (l *Log) AddData(key string, val interface{}) *Log {
-	l.Data.Set(key, val)
-	return l
-}
-
-func (l *Log) AddNote(step, note string) *Log {
-	l.Notes.Add(step, note)
 	return l
 }
 
@@ -91,7 +100,9 @@ func (l *Log) SetParent(parent *Log) error {
 		return ErrorParentThreadDiff
 	}
 
-	l.Parent = parent
+	if parent != nil {
+		l.Parent = parent
+	}
 
 	return nil
 }
@@ -112,6 +123,55 @@ func (l *Log) CreateChild(name string) (*Log, error) {
 	child.Parent = l
 
 	return child, nil
+}
+
+func (l Log) ToJson() []byte {
+	b, _ := l.MarshalJSON()
+	return b
+}
+
+func (l *Log) MarshalJSON() ([]byte, error) {
+	return json.Marshal(l.ToLogJson())
+}
+
+func (l Log) ToLogJson() LogJson {
+	var (
+		parentId, er *string
+		te           *int64
+	)
+	if l.Parent != nil {
+		pid := l.Parent.Id.String()
+		parentId = &pid
+	} else {
+		parentId = nil
+	}
+
+	if l.TimeEnd != nil {
+		teInt := l.TimeEnd.UnixNano()
+		te = &teInt
+	}
+
+	if l.Error != nil {
+		e1 := l.Error.Error()
+		er = &e1
+	}
+
+	return LogJson{
+		Id:          l.Id,
+		Thread:      l.Thread,
+		Name:        l.Name,
+		App:         l.App,
+		Time:        l.Time.UnixNano(),
+		TimeEnd:     te,
+		Result:      l.Result,
+		Finish:      l.Finish,
+		Environment: l.Environment,
+		Error:       er,
+		Data:        l.Data,
+		Notes:       l.Notes.prepareToJson(),
+		Tags:        l.Tags,
+		Parent:      parentId,
+	}
 }
 
 func (l Log) String() string {
@@ -139,116 +199,23 @@ func NewLog(name string) *Log {
 	}).SetDefaults()
 }
 
-/*
-
-
-
-type LogJson struct {
-	Id          uuid.UUID      `json:"id"`
-	Thread      uuid.UUID      `json:"thread"`
-	Name        string         `json:"name"`
-	App         string         `json:"app"`
-	Module      string         `json:"module"`
-	Time        int64          `json:"time"`
-	TimeEnd     *int64         `json:"timeEnd"`
-	Result      bool           `json:"result"`
-	Finish      bool           `json:"finish"`
-	Environment string         `json:"env"`
-	Error       *string        `json:"error"`
-	Data        LogExtraParams `json:"data"`
-	Notes       LogNoteGroups  `json:"notes"`
-	Tags        []string       `json:"tags"`
-	Parent      *string        `json:"parent"`
-}
-
-
-
-
-func (l *Log) CreateChildParams(name string, params LogExtraParams) Log {
-	return Log{
-		Id:          generateUUID(),
-		thread:      l.thread,
-		Name:        name,
-		App:         l.App,
-		notes:       NewNotesGroups(),
-		Data:        params,
-		Result:      false,
-		Time:        time.Now(),
-		Parent:      l,
-		Tags:        removeDuplicates(append(l.Tags, l.Id.String(), l.thread.String())),
-		Environment: l.Environment,
-	}
-}
-
-func (l Log) ToJsonByte() []byte {
-	b, _ := l.MarshalJSON()
-	return b
-}
-
-func (l *Log) MarshalJSON() ([]byte, error) {
-	return json.Marshal(l.ToLogJson())
-}
-
-
-func (l *Log) ToLogJson() LogJson {
-	var (
-		parentId, er *string
-		te           *int64
-	)
-	if l.Parent != nil {
-		pid := l.Parent.Id.String()
-		parentId = &pid
-	} else {
-		parentId = nil
-	}
-
-	if l.TimeEnd != nil {
-		teInt := l.TimeEnd.UnixNano()
-		te = &teInt
-	}
-
-	if l.Error != nil {
-		e1 := l.Error.Error()
-		er = &e1
-	}
-
-	return LogJson{
-		Id:          l.Id,
-		Thread:      l.thread,
-		Name:        l.Name,
-		App:         l.App,
-		Time:        l.Time.UnixNano(),
-		TimeEnd:     te,
-		Result:      l.Result,
-		Finish:      l.Finish,
-		Environment: l.Environment,
-		Error:       er,
-		Data:        l.Data,
-		Notes:       l.notes,
-		Tags:        l.Tags,
-		Parent:      parentId,
-	}
-}
-
-
-
-type LogShadow struct {
+type LogParentShadow struct {
 	Id     uuid.UUID `json:"id"`
 	Thread uuid.UUID `json:"thread"`
 }
 
-func (l Log) ToShadow() LogShadow {
-	return LogShadow{l.Id, l.thread}
+func (l Log) ToShadow() *LogParentShadow {
+	return &LogParentShadow{l.Id, l.Thread}
 }
 
-func (l *Log) SetParentFromShadow(shadow *LogShadow) *Log {
+func (l *Log) ParentFromShadow(shadow *LogParentShadow) *Log {
 	if shadow != nil {
-		l.Parent = &Log{Id: shadow.Id, thread: shadow.Thread}
-		l.thread = shadow.Thread
+		l.Parent = &Log{Id: shadow.Id, Thread: shadow.Thread}
+		l.Thread = shadow.Thread
 	}
 	return l
 }
-*/
+
 /*
 
 func (l Log) GetLevel() int {

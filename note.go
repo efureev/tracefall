@@ -79,15 +79,19 @@ func (n NoteGroups) Remove(groupName string) NoteGroups {
 }
 
 func (n NoteGroups) ToJson() []byte {
-	var list []*NoteGroup
-	for _, ng := range n {
-		list = append(list, ng)
-	}
-	b, err := json.Marshal(list)
+	b, err := json.Marshal(n.prepareToJson())
 	if err != nil {
 		b = []byte(`{}`)
 	}
 	return b
+}
+
+func (n NoteGroups) prepareToJson() []*NoteGroup {
+	var list []*NoteGroup
+	for _, ng := range n {
+		list = append(list, ng)
+	}
+	return list
 }
 
 func (n NoteGroups) ToJsonString() string {

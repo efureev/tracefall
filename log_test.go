@@ -259,5 +259,125 @@ func TestLog(t *testing.T) {
 			So(child, ShouldBeNil)
 			So(err, ShouldEqual, ErrorParentFinish)
 		})
+
+		Convey("To LogJson Struct", func() {
+			log.Tags.Add(`tag 1`)
+			log.Notes.Add(`group`, `note 1`)
+			log.Data.Set(`key`, `val`)
+			logJson := log.ToLogJson()
+
+			So(logJson, ShouldHaveSameTypeAs, LogJson{})
+
+			So(logJson.Id, ShouldEqual, log.Id)
+			So(logJson.Thread, ShouldEqual, log.Thread)
+			So(logJson.Time, ShouldEqual, log.Time.UnixNano())
+			So(logJson.Name, ShouldEqual, log.Name)
+			So(logJson.App, ShouldEqual, log.App)
+			So(logJson.Environment, ShouldEqual, log.Environment)
+			So(logJson.Tags, ShouldHaveSameTypeAs, []string{})
+			So(logJson.Tags, ShouldResemble, log.Tags.List())
+			So(logJson.Parent, ShouldBeNil)
+			So(logJson.TimeEnd, ShouldBeNil)
+			So(logJson.Finish, ShouldEqual, log.Finish)
+			So(logJson.Error, ShouldEqual, log.Error)
+			So(logJson.Result, ShouldEqual, log.Result)
+			So(logJson.Step, ShouldEqual, log.Step)
+			So(logJson.Data, ShouldResemble, log.Data)
+			So(logJson.Notes, ShouldResemble, log.Notes.prepareToJson())
+		})
+
+		Convey("To Json", func() {
+			log.Tags.Add(`tag 1`)
+			log.Notes.Add(`group first`, `note 1`)
+			log.Data.Set(`key`, `val`)
+
+			Convey("Simple log", func() {
+				jsonBytes := log.ToJson()
+
+				expected := fmt.Sprintf(`{"id":"%s","thread":"%s","name":"test log","app":"%s","time":%d,"timeEnd":null,"result":false,"finish":false,"env":"%s","error":null,"data":{"key":"%s"},"notes":[{"notes":[{"t":%d,"v":"%s"}],"label":"%s"}],"tags":["%s"],"parent":null,"step":%d}`,
+					log.Id,
+					log.Thread,
+					log.App,
+					log.Time.UnixNano(),
+					log.Environment,
+					log.Data.Get(`key`),
+					log.Notes.Get(`group first`).Notes[0].Time,
+					log.Notes.Get(`group first`).Notes[0].Note,
+					log.Notes.Get(`group first`).Label,
+					log.Tags[0],
+					log.Step,
+				)
+
+				So(string(jsonBytes), ShouldEqual, expected)
+			})
+
+			Convey("Error Finish log", func() {
+				log.Fail(errors.New(`fail`)).ThreadFinish()
+				jsonBytes := log.ToJson()
+
+				expected := fmt.Sprintf(`{"id":"%s","thread":"%s","name":"test log","app":"%s","time":%d,"timeEnd":%d,"result":false,"finish":true,"env":"%s","error":"%s","data":{"key":"%s"},"notes":[{"notes":[{"t":%d,"v":"%s"}],"label":"%s"}],"tags":["%s"],"parent":null,"step":%d}`,
+					log.Id,
+					log.Thread,
+					log.App,
+					log.Time.UnixNano(),
+					log.TimeEnd.UnixNano(),
+					log.Environment,
+					log.Error.Error(),
+					log.Data.Get(`key`),
+					log.Notes.Get(`group first`).Notes[0].Time,
+					log.Notes.Get(`group first`).Notes[0].Note,
+					log.Notes.Get(`group first`).Label,
+					log.Tags[0],
+					log.Step,
+				)
+
+				So(string(jsonBytes), ShouldEqual, expected)
+			})
+		})
+
+	})
+
+	Convey("Log Parent Shadow Struct", t, func() {
+
+		log := NewLog(`test log`)
+
+		Convey("To Shadow", func() {
+			shadow := log.ToShadow()
+
+			So(shadow, ShouldHaveSameTypeAs, &LogParentShadow{})
+			So(reflect.ValueOf(shadow).Kind(), ShouldEqual, reflect.Ptr)
+
+			So(shadow.Id, ShouldHaveSameTypeAs, uuid.UUID{})
+			So(shadow.Id, ShouldNotBeNil)
+			So(shadow.Id, ShouldEqual, log.Id)
+
+			So(shadow.Thread, ShouldHaveSameTypeAs, uuid.UUID{})
+			So(shadow.Thread, ShouldNotBeNil)
+			So(shadow.Thread, ShouldEqual, log.Thread)
+
+		})
+
+		Convey("From Shadow", func() {
+
+			parent := NewLog(`parent log`)
+			shadow := parent.ToShadow()
+
+			So(shadow.Id, ShouldEqual, parent.Id)
+			So(shadow.Thread, ShouldEqual, parent.Thread)
+
+			log.ParentFromShadow(shadow)
+
+			So(log.Parent, ShouldHaveSameTypeAs, &Log{})
+			So(reflect.ValueOf(log.Parent).Kind(), ShouldEqual, reflect.Ptr)
+
+			So(log.Parent.Id, ShouldHaveSameTypeAs, uuid.UUID{})
+			So(log.Parent.Id, ShouldNotBeNil)
+			So(log.Parent.Id, ShouldEqual, parent.Id)
+
+			So(log.Parent.Thread, ShouldHaveSameTypeAs, uuid.UUID{})
+			So(log.Parent.Thread, ShouldNotBeNil)
+			So(log.Parent.Thread, ShouldEqual, parent.Thread)
+		})
+
 	})
 }

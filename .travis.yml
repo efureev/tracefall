@@ -9,6 +9,9 @@ services:
 - postgresql
 
 before_script:
+- psql -c '\l' -U postgres
+- psql -c '\du' -U postgres
+- psql -c 'create database travis_test;' -U postgres
 - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
 - chmod +x ./cc-test-reporter
 - ./cc-test-reporter before-build
@@ -17,4 +20,5 @@ script:
 - go test -coverprofile c.out ./...
 
 after_script:
+- psql -c 'drop database travis_test;' -U postgres
 - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT

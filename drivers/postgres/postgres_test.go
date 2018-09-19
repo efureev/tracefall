@@ -63,7 +63,7 @@ func TestPostgresDriverOpen(t *testing.T) {
 }
 
 func TestPostgresDriverCreateAndDrop(t *testing.T) {
-	params := GetConnParams("localhost:5432", "postgres", "tracer", `efureev`, ``)
+	params := GetConnParams("localhost:5432", "postgres", "tracer", `postgres`, `postgres`)
 	db, err := traceFall.Open(`postgres`, params)
 	if err != nil {
 		log.Fatal(err)
@@ -129,7 +129,7 @@ func TestPostgresDriverGetter(t *testing.T) {
 
 	Convey("Postgres Driver Getter", t, func() {
 
-		params := GetConnParams("localhost:5432", "postgres", "tracer", `efureev`, ``)
+		params := GetConnParams("localhost:5432", "postgres", "tracer", `postgres`, `postgres`)
 
 		Convey("Create Params", func() {
 			So(params, ShouldHaveSameTypeAs, map[string]string{})

@@ -13,7 +13,7 @@ before_script:
 #- psql -c 'create database postgres;' -U postgres
 #- psql -c 'GRANT ALL PRIVILEGES ON DATABASE postgres TO efureev;' -U postgres
 - psql -c 'CREATE TABLE IF NOT EXISTS tracer (id UUID primary key, thread UUID NOT NULL, app VARCHAR(100) NOT NULL);' -U postgres
-- psql -c 'CREATE INDEX IF NOT EXISTS "tracer_app_idx" ON "tracer"("app");' -U postgres
+- psql -c 'CREATE INDEX "tracer_app_idx" ON "tracer"("app");' -U postgres
 - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
 - chmod +x ./cc-test-reporter
 - ./cc-test-reporter before-build

@@ -18,12 +18,12 @@ func TestPostgresDriverOpen(t *testing.T) {
 			}, ShouldPanic)
 
 			So(func() {
-				params := GetConnParams("localhost:54321", "postgres", "tracer", `efureev`, ``)
+				params := GetConnParams("localhost:54321", "postgres", "tracer", `postgres`, `postgres`)
 				traceFall.Open(`postgres`, params)
 			}, ShouldPanic)
 		})
 
-		params := GetConnParams("localhost:5432", "postgres", "tracer", `efureev`, ``)
+		params := GetConnParams("localhost:5432", "postgres", "tracer", `postgres`, `postgres`)
 		db, err := traceFall.Open(`postgres`, params)
 
 		Convey("Open Instance", func() {

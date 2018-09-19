@@ -98,7 +98,7 @@ func (n NoteGroups) ToJsonString() string {
 	return string(n.ToJson())
 }
 
-/*
+
 func (n *NoteGroups) FromJson(str string) error {
 	return json.Unmarshal([]byte(str), n)
-}*/
+}

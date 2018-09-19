@@ -7,6 +7,6 @@ Package for sending logs to the storage, for the subsequent withdrawal of the tr
 
 Supported storage drivers:  
 - [x] Console // invalid realisation
-- [ ] Postgres
+- [x] Postgres // invalid realisation
 - [ ] Algolia
 - [ ] ElasticSearch 

@@ -29,7 +29,7 @@ type LogJson struct {
 	Notes       []*NoteGroup `json:"notes"`
 	Tags        []string     `json:"tags"`
 	Parent      *string      `json:"parent"`
-	Step        uint16       `json:"step"`
+	//Step        uint16       `json:"step"`
 }
 
 type Log struct {
@@ -42,7 +42,7 @@ type Log struct {
 	Tags        Tags
 	Error       error
 	Environment string
-	Step        uint16
+	//Step        uint16
 
 	Result bool
 	Finish bool
@@ -50,6 +50,7 @@ type Log struct {
 	Time    time.Time
 	TimeEnd *time.Time
 	Parent  *Log
+	//items   []*Log
 }
 
 func (l *Log) SetName(name string) *Log {
@@ -102,6 +103,7 @@ func (l *Log) SetParent(parent *Log) error {
 
 	if parent != nil {
 		l.Parent = parent
+		//parent.items = append(parent.items, l)
 	}
 
 	return nil
@@ -121,6 +123,8 @@ func (l *Log) CreateChild(name string) (*Log, error) {
 	child.App = l.App
 	child.Environment = l.Environment
 	child.Parent = l
+
+	//l.items = append(l.items, child)
 
 	return child, nil
 }
@@ -171,6 +175,7 @@ func (l Log) ToLogJson() LogJson {
 		Notes:       l.Notes.prepareToJson(),
 		Tags:        l.Tags,
 		Parent:      parentId,
+		//Step : l.Step,
 	}
 }
 
@@ -216,23 +221,25 @@ func (l *Log) ParentFromShadow(shadow *LogParentShadow) *Log {
 	return l
 }
 
-/*
+const rootLevel int = 0
 
-func (l Log) GetLevel() int {
+func (l *Log) GetLevel() int {
 	current := l
-	level := 0
+	level := rootLevel
 	for {
 		if current.Parent == nil {
 			break
 		}
 		level++
-		current = *current.Parent
+		current = current.Parent
 	}
 
 	return level
 }
 
-func (l Log) BuildTree() string {
+/*
+
+func (l Log) BuildTreeFromChild() string {
 
 	current := l
 	level := l.GetLevel()

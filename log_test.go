@@ -281,7 +281,7 @@ func TestLog(t *testing.T) {
 			So(logJson.Finish, ShouldEqual, log.Finish)
 			So(logJson.Error, ShouldEqual, log.Error)
 			So(logJson.Result, ShouldEqual, log.Result)
-			So(logJson.Step, ShouldEqual, log.Step)
+			//So(logJson.Step, ShouldEqual, log.Step)
 			So(logJson.Data, ShouldResemble, log.Data)
 			So(logJson.Notes, ShouldResemble, log.Notes.prepareToJson())
 		})
@@ -294,7 +294,7 @@ func TestLog(t *testing.T) {
 			Convey("Simple log", func() {
 				jsonBytes := log.ToJson()
 
-				expected := fmt.Sprintf(`{"id":"%s","thread":"%s","name":"test log","app":"%s","time":%d,"timeEnd":null,"result":false,"finish":false,"env":"%s","error":null,"data":{"key":"%s"},"notes":[{"notes":[{"t":%d,"v":"%s"}],"label":"%s"}],"tags":["%s"],"parent":null,"step":%d}`,
+				expected := fmt.Sprintf(`{"id":"%s","thread":"%s","name":"test log","app":"%s","time":%d,"timeEnd":null,"result":false,"finish":false,"env":"%s","error":null,"data":{"key":"%s"},"notes":[{"notes":[{"t":%d,"v":"%s"}],"label":"%s"}],"tags":["%s"],"parent":null}`,
 					log.Id,
 					log.Thread,
 					log.App,
@@ -305,7 +305,7 @@ func TestLog(t *testing.T) {
 					log.Notes.Get(`group first`).Notes[0].Note,
 					log.Notes.Get(`group first`).Label,
 					log.Tags[0],
-					log.Step,
+					//log.Step,
 				)
 
 				So(string(jsonBytes), ShouldEqual, expected)
@@ -315,7 +315,7 @@ func TestLog(t *testing.T) {
 				log.Fail(errors.New(`fail`)).ThreadFinish()
 				jsonBytes := log.ToJson()
 
-				expected := fmt.Sprintf(`{"id":"%s","thread":"%s","name":"test log","app":"%s","time":%d,"timeEnd":%d,"result":false,"finish":true,"env":"%s","error":"%s","data":{"key":"%s"},"notes":[{"notes":[{"t":%d,"v":"%s"}],"label":"%s"}],"tags":["%s"],"parent":null,"step":%d}`,
+				expected := fmt.Sprintf(`{"id":"%s","thread":"%s","name":"test log","app":"%s","time":%d,"timeEnd":%d,"result":false,"finish":true,"env":"%s","error":"%s","data":{"key":"%s"},"notes":[{"notes":[{"t":%d,"v":"%s"}],"label":"%s"}],"tags":["%s"],"parent":null}`,
 					log.Id,
 					log.Thread,
 					log.App,
@@ -328,11 +328,29 @@ func TestLog(t *testing.T) {
 					log.Notes.Get(`group first`).Notes[0].Note,
 					log.Notes.Get(`group first`).Label,
 					log.Tags[0],
-					log.Step,
+					//log.Step,
 				)
 
 				So(string(jsonBytes), ShouldEqual, expected)
 			})
+		})
+
+		Convey("Trees", func() {
+			root := NewLog(`test log`)
+			root.Tags.Add(`tag 1`)
+			root.Notes.Add(`group first`, `note 1`)
+			root.Data.Set(`key`, `val`)
+
+			parent := root
+
+			for i := 0; i <= 5; i++ {
+				child, err := parent.CreateChild(fmt.Sprintf(`log #%d`, i+1))
+				So(err, ShouldBeNil)
+
+				parent = child
+
+				So(child.GetLevel(), ShouldEqual, i+1)
+			}
 		})
 
 	})

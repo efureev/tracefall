@@ -3,10 +3,10 @@
 [![Test Coverage](https://api.codeclimate.com/v1/badges/c933f06740177611ff5a/test_coverage)](https://codeclimate.com/github/efureev/traceFall/test_coverage)
 
 ### Info
-Пакет для отправки логов в хранилище, для последующего изъятия сервисом **traceViewer** и показа там.
+Package for sending logs to the storage, for the subsequent withdrawal of the traceViewer service and display there.
 
-Поддерживаемые драйверы хранилищ:  
-- [x] Console
+Supported storage drivers:  
+- [x] Console // invalid realisation
 - [ ] Postgres
 - [ ] Algolia
 - [ ] ElasticSearch 

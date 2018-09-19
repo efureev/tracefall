@@ -6,7 +6,7 @@
 Пакет для отправки логов в хранилище, для последующего изъятия сервисом **traceViewer** и показа там.
 
 Поддерживаемые драйверы хранилищ:  
--[x] Console
--[ ] Postgres
--[ ] Algolia
--[ ] ElasticSearch 
+- [x] Console
+- [ ] Postgres
+- [ ] Algolia
+- [ ] ElasticSearch 

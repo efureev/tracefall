@@ -342,19 +342,32 @@ func (d DriverPostgres) CreateTable() error {
   result      boolean NOT NULL default false,
   finish      boolean NOT NULL default false,
   created     timestamp without time zone default now()
-);
-	
-	CREATE INDEX  "` + d.params.TableName + `_time_idx" ON "` + d.params.TableName + `"("time");
-	CREATE INDEX  "` + d.params.TableName + `_finish_idx" ON "` + d.params.TableName + `"("finish");
-	CREATE INDEX  "` + d.params.TableName + `_result_idx" ON "` + d.params.TableName + `"("result");
-	CREATE INDEX  "` + d.params.TableName + `_result_idx" ON "` + d.params.TableName + `"("result");
-	CREATE INDEX  "` + d.params.TableName + `_env_idx" ON "` + d.params.TableName + `"("env");
-	CREATE INDEX  "` + d.params.TableName + `_app_idx" ON "` + d.params.TableName + `"("app");
-	CREATE INDEX  "` + d.params.TableName + `_thread_idx" ON "` + d.params.TableName + `"("thread");
-	CREATE INDEX  "` + d.params.TableName + `_parent_idx" ON "` + d.params.TableName + `"("parent");
-	CREATE INDEX  "` + d.params.TableName + `_data_idx" ON "` + d.params.TableName + `" USING GIN ("data");
-	CREATE INDEX  "` + d.params.TableName + `_notes_idx" ON "` + d.params.TableName + `" USING GIN ("notes");
-	CREATE INDEX  "` + d.params.TableName + `_tags_idx" ON "` + d.params.TableName + `" USING GIN ("tags");
+);`
+	_, err := db.Exec(query)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Create table for tracer
+func (d DriverPostgres) InstallIndex() error {
+	db := d.initDb()
+	defer db.Close()
+
+	query := `	
+	CREATE INDEX "` + d.params.TableName + `_time_idx" ON "` + d.params.TableName + `"("time");
+	CREATE INDEX "` + d.params.TableName + `_finish_idx" ON "` + d.params.TableName + `"("finish");
+	CREATE INDEX "` + d.params.TableName + `_result_idx" ON "` + d.params.TableName + `"("result");
+	CREATE INDEX "` + d.params.TableName + `_result_idx" ON "` + d.params.TableName + `"("result");
+	CREATE INDEX "` + d.params.TableName + `_env_idx" ON "` + d.params.TableName + `"("env");
+	CREATE INDEX "` + d.params.TableName + `_app_idx" ON "` + d.params.TableName + `"("app");
+	CREATE INDEX "` + d.params.TableName + `_thread_idx" ON "` + d.params.TableName + `"("thread");
+	CREATE INDEX "` + d.params.TableName + `_parent_idx" ON "` + d.params.TableName + `"("parent");
+	CREATE INDEX "` + d.params.TableName + `_data_idx" ON "` + d.params.TableName + `" USING GIN ("data");
+	CREATE INDEX "` + d.params.TableName + `_notes_idx" ON "` + d.params.TableName + `" USING GIN ("notes");
+	CREATE INDEX "` + d.params.TableName + `_tags_idx" ON "` + d.params.TableName + `" USING GIN ("tags");
 	`
 	_, err := db.Exec(query)
 	if err != nil {
@@ -411,6 +424,11 @@ func (d *DriverPostgres) Open(params map[string]string) (interface{}, error) {
 	err := d.CreateTable()
 	if err != nil {
 		panic(err)
+	}
+
+	err = d.InstallIndex()
+	if err != nil {
+		return nil, err
 	}
 
 	return nil, nil

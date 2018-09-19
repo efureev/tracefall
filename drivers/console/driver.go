@@ -1,7 +1,7 @@
 package console
 
 import (
-	"bitbucket.org/efureev/traceFall.2"
+	"github.com/efureev/traceFall"
 	"github.com/satori/go.uuid"
 )
 

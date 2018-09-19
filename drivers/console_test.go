@@ -1,8 +1,8 @@
 package drivers
 
 import (
-	"bitbucket.org/efureev/traceFall.2"
-	"bitbucket.org/efureev/traceFall.2/drivers/console"
+	"github.com/efureev/traceFall"
+	"github.com/efureev/traceFall/drivers/console"
 	"github.com/satori/go.uuid"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"

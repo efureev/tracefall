@@ -24,6 +24,8 @@ func TestExtraParams(t *testing.T) {
 
 			params.Set(`key1`, `value 2`)
 			So(params.Get(`key1`), ShouldEqual, `value 2`)
+
+			So(params.Get(`fail`), ShouldBeNil)
 		})
 
 		Convey("ToJson", func() {

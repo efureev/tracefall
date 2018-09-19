@@ -1,8 +1,7 @@
-package drivers
+package console
 
 import (
 	"github.com/efureev/traceFall"
-	"github.com/efureev/traceFall/drivers/console"
 	"github.com/satori/go.uuid"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
@@ -12,13 +11,13 @@ func TestConsoleDriver(t *testing.T) {
 
 	Convey("Console Driver Tests", t, func() {
 
-		db, err := traceFall.Open(`console`, console.GetDefaultConnParams())
+		db, err := traceFall.Open(`console`, GetDefaultConnParams())
 
 		Convey("Open Instance", func() {
 			So(err, ShouldBeNil)
 			So(db, ShouldNotBeNil)
 			So(db, ShouldHaveSameTypeAs, &traceFall.DB{})
-			So(db.Driver(), ShouldHaveSameTypeAs, &console.DriverConsole{})
+			So(db.Driver(), ShouldHaveSameTypeAs, &DriverConsole{})
 		})
 
 		l := traceFall.NewLog(`Test Message`)

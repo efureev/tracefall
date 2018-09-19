@@ -14,11 +14,6 @@ type Params struct {
 	Host, User, Password, DbName, TableName string
 }
 
-type DbWhere struct {
-	Key, Operation string
-	Val            interface{}
-}
-
 func (p *Params) set(params map[string]string) {
 	p.Host = params[`host`]
 	p.User = params[`user`]
@@ -384,13 +379,16 @@ func (d DriverPostgres) DropTable() error {
 	return nil
 }
 
-func (d DriverPostgres) Truncate(_ string) (traceFall.Response, error) {
+func (d DriverPostgres) Truncate(ind string) (traceFall.Response, error) {
 	db := d.initDb()
 	defer db.Close()
 
-	resp := traceFall.NewResponse(nil).GenerateId()
+	resp := traceFall.NewResponse(ind).GenerateId()
 
-	query := `TRUNCATE TABLE ` + d.params.TableName + `;`
+	if ind == `` {
+		ind = d.params.TableName
+	}
+	query := `TRUNCATE TABLE ` + ind + `;`
 
 	_, err := db.Exec(query)
 	if err != nil {

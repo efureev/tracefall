@@ -10,22 +10,56 @@ import (
 )
 
 func TestPostgresDriverOpen(t *testing.T) {
-	params := GetConnParams("localhost:5432", "postgres", "tracer", `efureev`, ``)
-	db, err := traceFall.Open(`postgres`, params)
-	if err != nil {
-		log.Fatal(err)
-	}
-	db1 := db.Driver().(*DriverPostgres)
+	Convey("Postgres Driver Tests", t, func() {
+		Convey("Open wrong db", func() {
+			So(func() {
+				params := GetConnParams("localhost:5432", "postgres", "tracerFake", `root`, ``)
+				traceFall.Open(`postgres`, params)
+			}, ShouldPanic)
 
-	if err := db1.DropTable(); err != nil {
-		assert.Fail(t, `Don't DROP table: `+params[`table`])
-	}
+			So(func() {
+				params := GetConnParams("localhost:54321", "postgres", "tracer", `efureev`, ``)
+				traceFall.Open(`postgres`, params)
+			}, ShouldPanic)
+		})
 
-	if err := db1.CreateTable(); err != nil {
-		assert.Fail(t, `Don't CREATE table: `+params[`table`])
-	}
+		params := GetConnParams("localhost:5432", "postgres", "tracer", `efureev`, ``)
+		db, err := traceFall.Open(`postgres`, params)
 
-	assert.IsType(t, &DriverPostgres{}, db.Driver())
+		Convey("Open Instance", func() {
+			So(err, ShouldBeNil)
+			So(db, ShouldNotBeNil)
+			So(db, ShouldHaveSameTypeAs, &traceFall.DB{})
+			So(db.Driver(), ShouldHaveSameTypeAs, &DriverPostgres{})
+
+			db1 := db.Driver().(*DriverPostgres)
+			err = db1.DropTable()
+			So(err, ShouldBeNil)
+
+			err = db1.CreateTable()
+			So(err, ShouldBeNil)
+
+			resp, err := db1.Truncate(``)
+
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveSameTypeAs, traceFall.Response{})
+			So(resp.Error, ShouldBeNil)
+			So(resp.Result, ShouldBeTrue)
+			So(resp.Request(), ShouldHaveSameTypeAs, *new(string))
+			So(resp.Request(), ShouldEqual, ``)
+
+			respFail, err := db1.Truncate(`absent`)
+
+			So(err, ShouldBeError)
+			So(respFail, ShouldHaveSameTypeAs, traceFall.Response{})
+			So(respFail.Error, ShouldBeError)
+			So(respFail.Result, ShouldBeFalse)
+			So(respFail.Request(), ShouldHaveSameTypeAs, *new(string))
+			So(respFail.Request(), ShouldEqual, `absent`)
+
+		})
+
+	})
 }
 
 func TestPostgresDriverCreateAndDrop(t *testing.T) {

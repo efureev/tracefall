@@ -31,9 +31,9 @@ func TestConsoleDriver(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			So(resp, ShouldHaveSameTypeAs, traceFall.Response{})
-			So(resp.Id, ShouldNotBeNil)
-			So(resp.Id, ShouldNotBeNil)
-			So(resp.Id, ShouldHaveSameTypeAs, *new(string))
+			So(resp.ID, ShouldNotBeNil)
+			So(resp.ID, ShouldNotBeNil)
+			So(resp.ID, ShouldHaveSameTypeAs, *new(string))
 			So(resp.Data, ShouldHaveSameTypeAs, traceFall.ResponseData{})
 			So(resp.Request(), ShouldEqual, l.String())
 		})

@@ -3,11 +3,12 @@ package traceFall
 import "github.com/satori/go.uuid"
 
 func generateUUID() uuid.UUID {
-	if uid, err := uuid.NewV4(); err != nil {
+	uid, err := uuid.NewV4()
+	if err != nil {
 		return generateUUID()
-	} else {
-		return uid
 	}
+	return uid
+
 }
 
 func removeDuplicatesFromSlice(elements []string) []string {

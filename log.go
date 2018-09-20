@@ -8,14 +8,15 @@ import (
 	"time"
 )
 
+// Environments
 const (
 	EnvironmentDev  = `dev`
 	EnvironmentProd = `prod`
 	EnvironmentTest = `test`
 )
 
-type LogJson struct {
-	Id          uuid.UUID    `json:"id"`
+type LogJSON struct {
+	ID          uuid.UUID    `json:"id"`
 	Thread      uuid.UUID    `json:"thread"`
 	Name        string       `json:"name"`
 	App         string       `json:"app"`
@@ -33,7 +34,7 @@ type LogJson struct {
 }
 
 type Log struct {
-	Id          uuid.UUID
+	ID          uuid.UUID
 	Thread      uuid.UUID
 	Name        string
 	Data        ExtraData
@@ -58,26 +59,26 @@ func (l *Log) SetName(name string) *Log {
 	return l
 }
 
-// set finish time of the log
+// FinishTimeEnd set finish time of the log
 func (l *Log) FinishTimeEnd() *Log {
 	n := time.Now()
 	l.TimeEnd = &n
 	return l
 }
 
-// finish thread line
+// ThreadFinish finish thread line
 func (l *Log) ThreadFinish() *Log {
 	l.Finish = true
 	return l
 }
 
-// set result of the log: success
+// Success set result of the log: success
 func (l *Log) Success() *Log {
 	l.FinishTimeEnd().Result = true
 	return l
 }
 
-// set result of the log: error
+// Fail set result of the log: error
 func (l *Log) Fail(err error) *Log {
 	l.Result = false
 	l.Error = err
@@ -109,8 +110,8 @@ func (l *Log) SetParent(parent *Log) error {
 	return nil
 }
 
-func (l *Log) SetParentId(id uuid.UUID) *Log {
-	l.Parent = &Log{Id: id, Thread: l.Thread}
+func (l *Log) SetParentID(id uuid.UUID) *Log {
+	l.Parent = &Log{ID: id, Thread: l.Thread}
 	return l
 }
 
@@ -129,25 +130,25 @@ func (l *Log) CreateChild(name string) (*Log, error) {
 	return child, nil
 }
 
-func (l Log) ToJson() []byte {
+func (l Log) ToJSON() []byte {
 	b, _ := l.MarshalJSON()
 	return b
 }
 
 func (l *Log) MarshalJSON() ([]byte, error) {
-	return json.Marshal(l.ToLogJson())
+	return json.Marshal(l.ToLogJSON())
 }
 
-func (l Log) ToLogJson() LogJson {
+func (l Log) ToLogJSON() LogJSON {
 	var (
-		parentId, er *string
+		parentID, er *string
 		te           *int64
 	)
 	if l.Parent != nil {
-		pid := l.Parent.Id.String()
-		parentId = &pid
+		pid := l.Parent.ID.String()
+		parentID = &pid
 	} else {
-		parentId = nil
+		parentID = nil
 	}
 
 	if l.TimeEnd != nil {
@@ -160,8 +161,8 @@ func (l Log) ToLogJson() LogJson {
 		er = &e1
 	}
 
-	return LogJson{
-		Id:          l.Id,
+	return LogJSON{
+		ID:          l.ID,
 		Thread:      l.Thread,
 		Name:        l.Name,
 		App:         l.App,
@@ -172,9 +173,9 @@ func (l Log) ToLogJson() LogJson {
 		Environment: l.Environment,
 		Error:       er,
 		Data:        l.Data,
-		Notes:       l.Notes.prepareToJson(),
+		Notes:       l.Notes.prepareToJSON(),
 		Tags:        l.Tags,
-		Parent:      parentId,
+		Parent:      parentID,
 		//Step : l.Step,
 	}
 }
@@ -193,7 +194,7 @@ func (l *Log) SetDefaults() *Log {
 func NewLog(name string) *Log {
 	id := generateUUID()
 	return (&Log{
-		Id:     id,
+		ID:     id,
 		Thread: id,
 		Name:   name,
 		Data:   NewExtraData(),
@@ -205,17 +206,17 @@ func NewLog(name string) *Log {
 }
 
 type LogParentShadow struct {
-	Id     uuid.UUID `json:"id"`
+	ID     uuid.UUID `json:"id"`
 	Thread uuid.UUID `json:"thread"`
 }
 
 func (l Log) ToShadow() *LogParentShadow {
-	return &LogParentShadow{l.Id, l.Thread}
+	return &LogParentShadow{l.ID, l.Thread}
 }
 
 func (l *Log) ParentFromShadow(shadow *LogParentShadow) *Log {
 	if shadow != nil {
-		l.Parent = &Log{Id: shadow.Id, Thread: shadow.Thread}
+		l.Parent = &Log{ID: shadow.ID, Thread: shadow.Thread}
 		l.Thread = shadow.Thread
 	}
 	return l

@@ -24,13 +24,13 @@ func TestLog(t *testing.T) {
 			So(log.Time, ShouldHappenAfter, timeStart)
 			So(log.Time, ShouldHappenBefore, time.Now())
 
-			So(log.Id, ShouldHaveSameTypeAs, uuid.UUID{})
-			So(log.Id, ShouldNotBeNil)
+			So(log.ID, ShouldHaveSameTypeAs, uuid.UUID{})
+			So(log.ID, ShouldNotBeNil)
 
 			So(log.Thread, ShouldHaveSameTypeAs, uuid.UUID{})
 			So(log.Thread, ShouldNotBeNil)
 
-			So(log.Thread, ShouldEqual, log.Id)
+			So(log.Thread, ShouldEqual, log.ID)
 
 			So(log.Name, ShouldEqual, `test log`)
 
@@ -153,16 +153,16 @@ func TestLog(t *testing.T) {
 			So(log.Parent, ShouldBeNil)
 
 			Convey("set parent ID", func() {
-				parentId := generateUUID()
+				parentID := generateUUID()
 
-				log.SetParentId(parentId)
+				log.SetParentID(parentID)
 
 				So(log.Parent, ShouldHaveSameTypeAs, &Log{})
 				So(reflect.ValueOf(log.Parent).Kind(), ShouldEqual, reflect.Ptr)
 
-				So(log.Parent.Id, ShouldHaveSameTypeAs, uuid.UUID{})
-				So(log.Parent.Id, ShouldNotBeNil)
-				So(log.Parent.Id, ShouldEqual, parentId)
+				So(log.Parent.ID, ShouldHaveSameTypeAs, uuid.UUID{})
+				So(log.Parent.ID, ShouldNotBeNil)
+				So(log.Parent.ID, ShouldEqual, parentID)
 
 				So(log.Parent.Thread, ShouldHaveSameTypeAs, uuid.UUID{})
 				So(log.Parent.Thread, ShouldNotBeNil)
@@ -182,9 +182,9 @@ func TestLog(t *testing.T) {
 					So(log.Parent, ShouldHaveSameTypeAs, &Log{})
 					So(reflect.ValueOf(log.Parent).Kind(), ShouldEqual, reflect.Ptr)
 
-					So(log.Parent.Id, ShouldHaveSameTypeAs, uuid.UUID{})
-					So(log.Parent.Id, ShouldNotBeNil)
-					So(log.Parent.Id, ShouldEqual, parenLog.Id)
+					So(log.Parent.ID, ShouldHaveSameTypeAs, uuid.UUID{})
+					So(log.Parent.ID, ShouldNotBeNil)
+					So(log.Parent.ID, ShouldEqual, parenLog.ID)
 
 					So(log.Parent.Thread, ShouldHaveSameTypeAs, uuid.UUID{})
 					So(log.Parent.Thread, ShouldNotBeNil)
@@ -232,8 +232,8 @@ func TestLog(t *testing.T) {
 			So(child.Time, ShouldHappenAfter, timeStart)
 			So(child.Time, ShouldHappenBefore, time.Now())
 
-			So(child.Id, ShouldHaveSameTypeAs, uuid.UUID{})
-			So(child.Id, ShouldNotBeNil)
+			So(child.ID, ShouldHaveSameTypeAs, uuid.UUID{})
+			So(child.ID, ShouldNotBeNil)
 
 			So(child.Thread, ShouldHaveSameTypeAs, uuid.UUID{})
 			So(child.Thread, ShouldNotBeNil)
@@ -264,26 +264,26 @@ func TestLog(t *testing.T) {
 			log.Tags.Add(`tag 1`)
 			log.Notes.Add(`group`, `note 1`)
 			log.Data.Set(`key`, `val`)
-			logJson := log.ToLogJson()
+			lJSON := log.ToLogJSON()
 
-			So(logJson, ShouldHaveSameTypeAs, LogJson{})
+			So(lJSON, ShouldHaveSameTypeAs, LogJSON{})
 
-			So(logJson.Id, ShouldEqual, log.Id)
-			So(logJson.Thread, ShouldEqual, log.Thread)
-			So(logJson.Time, ShouldEqual, log.Time.UnixNano())
-			So(logJson.Name, ShouldEqual, log.Name)
-			So(logJson.App, ShouldEqual, log.App)
-			So(logJson.Environment, ShouldEqual, log.Environment)
-			So(logJson.Tags, ShouldHaveSameTypeAs, []string{})
-			So(logJson.Tags, ShouldResemble, log.Tags.List())
-			So(logJson.Parent, ShouldBeNil)
-			So(logJson.TimeEnd, ShouldBeNil)
-			So(logJson.Finish, ShouldEqual, log.Finish)
-			So(logJson.Error, ShouldEqual, log.Error)
-			So(logJson.Result, ShouldEqual, log.Result)
-			//So(logJson.Step, ShouldEqual, log.Step)
-			So(logJson.Data, ShouldResemble, log.Data)
-			So(logJson.Notes, ShouldResemble, log.Notes.prepareToJson())
+			So(lJSON.ID, ShouldEqual, log.ID)
+			So(lJSON.Thread, ShouldEqual, log.Thread)
+			So(lJSON.Time, ShouldEqual, log.Time.UnixNano())
+			So(lJSON.Name, ShouldEqual, log.Name)
+			So(lJSON.App, ShouldEqual, log.App)
+			So(lJSON.Environment, ShouldEqual, log.Environment)
+			So(lJSON.Tags, ShouldHaveSameTypeAs, []string{})
+			So(lJSON.Tags, ShouldResemble, log.Tags.List())
+			So(lJSON.Parent, ShouldBeNil)
+			So(lJSON.TimeEnd, ShouldBeNil)
+			So(lJSON.Finish, ShouldEqual, log.Finish)
+			So(lJSON.Error, ShouldEqual, log.Error)
+			So(lJSON.Result, ShouldEqual, log.Result)
+			//So(lJSON.Step, ShouldEqual, log.Step)
+			So(lJSON.Data, ShouldResemble, log.Data)
+			So(lJSON.Notes, ShouldResemble, log.Notes.prepareToJSON())
 		})
 
 		Convey("To Json", func() {
@@ -292,10 +292,10 @@ func TestLog(t *testing.T) {
 			log.Data.Set(`key`, `val`)
 
 			Convey("Simple log", func() {
-				jsonBytes := log.ToJson()
+				jsonBytes := log.ToJSON()
 
 				expected := fmt.Sprintf(`{"id":"%s","thread":"%s","name":"test log","app":"%s","time":%d,"timeEnd":null,"result":false,"finish":false,"env":"%s","error":null,"data":{"key":"%s"},"notes":[{"notes":[{"t":%d,"v":"%s"}],"label":"%s"}],"tags":["%s"],"parent":null}`,
-					log.Id,
+					log.ID,
 					log.Thread,
 					log.App,
 					log.Time.UnixNano(),
@@ -313,10 +313,10 @@ func TestLog(t *testing.T) {
 
 			Convey("Error Finish log", func() {
 				log.Fail(errors.New(`fail`)).ThreadFinish()
-				jsonBytes := log.ToJson()
+				jsonBytes := log.ToJSON()
 
 				expected := fmt.Sprintf(`{"id":"%s","thread":"%s","name":"test log","app":"%s","time":%d,"timeEnd":%d,"result":false,"finish":true,"env":"%s","error":"%s","data":{"key":"%s"},"notes":[{"notes":[{"t":%d,"v":"%s"}],"label":"%s"}],"tags":["%s"],"parent":null}`,
-					log.Id,
+					log.ID,
 					log.Thread,
 					log.App,
 					log.Time.UnixNano(),
@@ -365,9 +365,9 @@ func TestLog(t *testing.T) {
 			So(shadow, ShouldHaveSameTypeAs, &LogParentShadow{})
 			So(reflect.ValueOf(shadow).Kind(), ShouldEqual, reflect.Ptr)
 
-			So(shadow.Id, ShouldHaveSameTypeAs, uuid.UUID{})
-			So(shadow.Id, ShouldNotBeNil)
-			So(shadow.Id, ShouldEqual, log.Id)
+			So(shadow.ID, ShouldHaveSameTypeAs, uuid.UUID{})
+			So(shadow.ID, ShouldNotBeNil)
+			So(shadow.ID, ShouldEqual, log.ID)
 
 			So(shadow.Thread, ShouldHaveSameTypeAs, uuid.UUID{})
 			So(shadow.Thread, ShouldNotBeNil)
@@ -380,7 +380,7 @@ func TestLog(t *testing.T) {
 			parent := NewLog(`parent log`)
 			shadow := parent.ToShadow()
 
-			So(shadow.Id, ShouldEqual, parent.Id)
+			So(shadow.ID, ShouldEqual, parent.ID)
 			So(shadow.Thread, ShouldEqual, parent.Thread)
 
 			log.ParentFromShadow(shadow)
@@ -388,9 +388,9 @@ func TestLog(t *testing.T) {
 			So(log.Parent, ShouldHaveSameTypeAs, &Log{})
 			So(reflect.ValueOf(log.Parent).Kind(), ShouldEqual, reflect.Ptr)
 
-			So(log.Parent.Id, ShouldHaveSameTypeAs, uuid.UUID{})
-			So(log.Parent.Id, ShouldNotBeNil)
-			So(log.Parent.Id, ShouldEqual, parent.Id)
+			So(log.Parent.ID, ShouldHaveSameTypeAs, uuid.UUID{})
+			So(log.Parent.ID, ShouldNotBeNil)
+			So(log.Parent.ID, ShouldEqual, parent.ID)
 
 			So(log.Parent.Thread, ShouldHaveSameTypeAs, uuid.UUID{})
 			So(log.Parent.Thread, ShouldNotBeNil)

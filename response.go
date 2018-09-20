@@ -6,7 +6,7 @@ import (
 
 type ResponseData map[string]interface{}
 type Response struct {
-	Id      string
+	ID      string
 	Error   error
 	Data    ResponseData
 	Result  bool
@@ -35,8 +35,8 @@ func (r *Response) SetError(err error) *Response {
 
 	return r
 }
-func (r *Response) SetId(id string) *Response {
-	r.Id = id
+func (r *Response) SetID(id string) *Response {
+	r.ID = id
 	return r
 }
 
@@ -45,8 +45,8 @@ func (r *Response) SetData(data ResponseData) *Response {
 	return r
 }
 
-func (r *Response) GenerateId() *Response {
-	r.Id = generateUUID().String()
+func (r *Response) GenerateID() *Response {
+	r.ID = generateUUID().String()
 	return r
 }
 

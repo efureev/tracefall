@@ -141,7 +141,7 @@ func TestNoteGroups(t *testing.T) {
 			note := groups.Get(`first group`).Notes[0]
 
 			expected := fmt.Sprintf(`[{"notes":[{"t":%d,"v":"first note"}],"label":"first group"}]`, note.Time)
-			So(groups.ToJsonString(), ShouldEqual, expected)
+			So(groups.ToJSONString(), ShouldEqual, expected)
 		})
 		/*
 				Convey("FromJson", func() {

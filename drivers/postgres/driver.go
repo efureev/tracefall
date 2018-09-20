@@ -2,10 +2,10 @@ package postgres
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/efureev/traceFall"
 	"github.com/lib/pq"
-	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"time"
 )
@@ -63,15 +63,15 @@ func (d DriverPostgres) Send(l *traceFall.Log) (traceFall.Response, error) {
 	defer stmt.Close()
 
 	var (
-		parentId, errLog *string
+		parentID, errLog *string
 		te               *int64
 	)
 
 	if l.Parent != nil {
-		idStr := l.Parent.Id.String()
-		parentId = &idStr
+		idStr := l.Parent.ID.String()
+		parentID = &idStr
 	} else {
-		parentId = nil
+		parentID = nil
 	}
 
 	if l.Error != nil {
@@ -86,8 +86,8 @@ func (d DriverPostgres) Send(l *traceFall.Log) (traceFall.Response, error) {
 		te = &teInt
 	}
 
-	row := db.QueryRow(query, l.Id.String(), l.Thread.String(), parentId, l.App, l.Name, l.Time.UnixNano(), te,
-		l.Environment, pq.Array(l.Tags), l.Notes.ToJson(), l.Data.ToJson(), errLog, l.Result, l.Finish)
+	row := db.QueryRow(query, l.ID.String(), l.Thread.String(), parentID, l.App, l.Name, l.Time.UnixNano(), te,
+		l.Environment, pq.Array(l.Tags), l.Notes.ToJSON(), l.Data.ToJSON(), errLog, l.Result, l.Finish)
 
 	var id string
 
@@ -96,7 +96,7 @@ func (d DriverPostgres) Send(l *traceFall.Log) (traceFall.Response, error) {
 		resp.SetError(err)
 		return *resp, err
 	case nil:
-		resp.Success().SetId(id)
+		resp.Success().SetID(id)
 		return *resp, err
 	default:
 		panic(err)
@@ -157,7 +157,7 @@ func (d DriverPostgres) getListResult(rows *sql.Rows) ([]*traceFall.Log, error) 
 		if err != nil {
 			return nil, err
 		}
-		l.Id = uid
+		l.ID = uid
 		thid, err := uuid.FromString(threadStr)
 		if err != nil {
 			return nil, err
@@ -169,11 +169,11 @@ func (d DriverPostgres) getListResult(rows *sql.Rows) ([]*traceFall.Log, error) 
 			if err != nil {
 				return nil, err
 			}
-			l.SetParentId(pid)
+			l.SetParentID(pid)
 		}
 
-		l.Data.FromJson(dataStr)
-		l.Notes.FromJson(notesStr)
+		l.Data.FromJSON(dataStr)
+		l.Notes.FromJSON(notesStr)
 		l.Tags = traceFall.Tags(t)
 
 		l.Time = time.Unix(0, ts)
@@ -255,7 +255,7 @@ func (d DriverPostgres) GetThread(id uuid.UUID) (traceFall.Response, error) {
 		return *resp.SetError(err), err
 	}
 
-	return *resp.SetId(id.String()).SetData(map[string]interface{}{`list`: list}).Success(), nil
+	return *resp.SetID(id.String()).SetData(map[string]interface{}{`list`: list}).Success(), nil
 }
 
 func (d DriverPostgres) Get(id uuid.UUID) (traceFall.Response, error) {
@@ -285,7 +285,7 @@ func (d DriverPostgres) Get(id uuid.UUID) (traceFall.Response, error) {
 		if err != nil {
 			return *resp.SetError(err), nil
 		}
-		l.Id = uid
+		l.ID = uid
 		thid, err := uuid.FromString(threadStr)
 		if err != nil {
 			return *resp.SetError(err), nil
@@ -297,11 +297,11 @@ func (d DriverPostgres) Get(id uuid.UUID) (traceFall.Response, error) {
 			if err != nil {
 				return *resp.SetError(err), nil
 			}
-			l.SetParentId(pid)
+			l.SetParentID(pid)
 		}
 
-		l.Data.FromJson(dataStr)
-		l.Notes.FromJson(notesStr)
+		l.Data.FromJSON(dataStr)
+		l.Notes.FromJSON(notesStr)
 		l.Tags = traceFall.Tags(t)
 
 		l.Time = time.Unix(0, ts)
@@ -315,7 +315,7 @@ func (d DriverPostgres) Get(id uuid.UUID) (traceFall.Response, error) {
 			l.Error = errors.New(*errorPtr)
 		}
 
-		return *resp.SetId(l.Id.String()).SetData(map[string]interface{}{`log`: l}).Success(), nil
+		return *resp.SetID(l.ID.String()).SetData(map[string]interface{}{`log`: l}).Success(), nil
 	default:
 		return *resp.SetError(err), nil
 	}
@@ -395,7 +395,7 @@ func (d DriverPostgres) Truncate(ind string) (traceFall.Response, error) {
 	db := d.initDb()
 	defer db.Close()
 
-	resp := traceFall.NewResponse(ind).GenerateId()
+	resp := traceFall.NewResponse(ind).GenerateID()
 
 	if ind == `` {
 		ind = d.params.TableName
@@ -417,11 +417,12 @@ func (d *DriverPostgres) Open(params map[string]string) (interface{}, error) {
 	defer db.Close()
 
 	if err := db.Ping(); err != nil {
-		e := errors.Wrapf(err, "Couldn't ping postgre database (%s)", d.params.DbName)
+		e := errors.New(fmt.Sprintf("Couldn't ping postgre database (%s): error: %s", d.params.DbName, err))
 		panic(e)
 	}
 
 	err := d.CreateTable()
+
 	if err != nil {
 		panic(err)
 	}

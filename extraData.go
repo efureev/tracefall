@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 )
 
+// ExtraData is data tree
 type ExtraData map[string]interface{}
 
 func (e *ExtraData) Set(key string, val interface{}) *ExtraData {
@@ -18,7 +19,7 @@ func (e ExtraData) Get(key string) interface{} {
 	return nil
 }
 
-func (e ExtraData) ToJson() []byte {
+func (e ExtraData) ToJSON() []byte {
 	b, err := json.Marshal(e)
 	if err != nil {
 		b = []byte(`{}`)
@@ -26,7 +27,7 @@ func (e ExtraData) ToJson() []byte {
 	return b
 }
 
-func (e *ExtraData) FromJson(str string) {
+func (e *ExtraData) FromJSON(str string) {
 	json.Unmarshal([]byte(str), e)
 }
 

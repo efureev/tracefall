@@ -32,7 +32,7 @@ func TestExtraParams(t *testing.T) {
 			params[`test`] = `value`
 			params[`dig`] = 123
 
-			So(string(params.ToJson()), ShouldEqual, `{"dig":123,"test":"value"}`)
+			So(string(params.ToJSON()), ShouldEqual, `{"dig":123,"test":"value"}`)
 		})
 	})
 }

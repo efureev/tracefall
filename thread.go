@@ -1,3 +1,3 @@
 package traceFall
 
-type Thread []*LogJson
+type Thread []*LogJSON

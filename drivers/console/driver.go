@@ -10,36 +10,36 @@ type DriverConsole struct{}
 func (d DriverConsole) Send(l *traceFall.Log) (traceFall.Response, error) {
 	r := d.toString(l)
 	println(r)
-	return *traceFall.NewResponse(r).GenerateId().Success(), nil
+	return *traceFall.NewResponse(r).GenerateID().Success(), nil
 }
 
 func (d DriverConsole) RemoveThread(id uuid.UUID) (traceFall.Response, error) {
 	r := `method not worked on Console Driver.. Don't use it`
 	println(r)
-	return *traceFall.NewResponse(id).SetData(traceFall.ResponseData{`result`: true}).GenerateId().Success(), nil
+	return *traceFall.NewResponse(id).SetData(traceFall.ResponseData{`result`: true}).GenerateID().Success(), nil
 }
 
 func (d DriverConsole) RemoveByTags(_ traceFall.Tags) (traceFall.Response, error) {
 	r := `Method not worked on Console Driver.. Don't use it!`
 	println(r)
-	return *traceFall.NewResponse(r).GenerateId().Success(), nil
+	return *traceFall.NewResponse(r).GenerateID().Success(), nil
 }
 
 func (d DriverConsole) Get(_ uuid.UUID) (traceFall.Response, error) {
 	r := `Method not worked on Console Driver.. Don't use it!`
 	println(r)
-	return *traceFall.NewResponse(r).GenerateId().Success(), nil
+	return *traceFall.NewResponse(r).GenerateID().Success(), nil
 }
 func (d DriverConsole) GetThread(id uuid.UUID) (traceFall.Response, error) {
 	r := `Method not worked on Console Driver.. Don't use it!`
 	println(r)
-	return *traceFall.NewResponse(r).GenerateId().Success(), nil
+	return *traceFall.NewResponse(r).GenerateID().Success(), nil
 }
 
 func (d DriverConsole) Truncate(_ string) (traceFall.Response, error) {
 	r := `Method not worked on Console Driver.. Don't use it!`
 	println(r)
-	return *traceFall.NewResponse(r).GenerateId().Success(), nil
+	return *traceFall.NewResponse(r).GenerateID().Success(), nil
 }
 
 func (d DriverConsole) Open(map[string]string) (interface{}, error) {

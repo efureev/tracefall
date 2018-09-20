@@ -11,30 +11,30 @@ type DriverTest struct{}
 
 func (d DriverTest) Send(l *Log) (Response, error) {
 	r := l.String()
-	return *NewResponse(r).GenerateId().Success(), nil
+	return *NewResponse(r).GenerateID().Success(), nil
 }
 
 func (d DriverTest) Get(id uuid.UUID) (Response, error) {
-	return *NewResponse(id).SetError(errors.New(`method worked on TEST Driver`)).GenerateId(), nil
+	return *NewResponse(id).SetError(errors.New(`method worked on TEST Driver`)).GenerateID(), nil
 }
 
 func (d DriverTest) RemoveThread(id uuid.UUID) (Response, error) {
-	return *NewResponse(id).SetData(ResponseData{`result`: true}).GenerateId().Success(), nil
+	return *NewResponse(id).SetData(ResponseData{`result`: true}).GenerateID().Success(), nil
 }
 
 func (d DriverTest) RemoveByTags(tags Tags) (Response, error) {
-	return *NewResponse(tags).SetData(ResponseData{`result`: true}).GenerateId().Success(), nil
+	return *NewResponse(tags).SetData(ResponseData{`result`: true}).GenerateID().Success(), nil
 }
 
 func (d DriverTest) GetThread(id uuid.UUID) (Response, error) {
-	l1 := NewLog(`log 1`).ToLogJson()
-	l2 := NewLog(`log 2`).ToLogJson()
+	l1 := NewLog(`log 1`).ToLogJSON()
+	l2 := NewLog(`log 2`).ToLogJSON()
 	data := ResponseData{`thread`: Thread{&l1, &l2}}
-	return *NewResponse(id).SetData(data).GenerateId().Success(), nil
+	return *NewResponse(id).SetData(data).GenerateID().Success(), nil
 }
 
 func (d DriverTest) Truncate(ind string) (Response, error) {
-	return *NewResponse(ind).SetError(errors.New(`method worked on TEST Driver`)).GenerateId(), nil
+	return *NewResponse(ind).SetError(errors.New(`method worked on TEST Driver`)).GenerateID(), nil
 }
 
 func (d DriverTest) Open(map[string]string) (interface{}, error) {

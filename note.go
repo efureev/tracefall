@@ -78,15 +78,15 @@ func (n NoteGroups) Remove(groupName string) NoteGroups {
 	return n
 }
 
-func (n NoteGroups) ToJson() []byte {
-	b, err := json.Marshal(n.prepareToJson())
+func (n NoteGroups) ToJSON() []byte {
+	b, err := json.Marshal(n.prepareToJSON())
 	if err != nil {
 		b = []byte(`{}`)
 	}
 	return b
 }
 
-func (n NoteGroups) prepareToJson() []*NoteGroup {
+func (n NoteGroups) prepareToJSON() []*NoteGroup {
 	var list []*NoteGroup
 	for _, ng := range n {
 		list = append(list, ng)
@@ -94,10 +94,10 @@ func (n NoteGroups) prepareToJson() []*NoteGroup {
 	return list
 }
 
-func (n NoteGroups) ToJsonString() string {
-	return string(n.ToJson())
+func (n NoteGroups) ToJSONString() string {
+	return string(n.ToJSON())
 }
 
-func (n *NoteGroups) FromJson(str string) error {
+func (n *NoteGroups) FromJSON(str string) error {
 	return json.Unmarshal([]byte(str), n)
 }

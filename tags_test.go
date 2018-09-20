@@ -1,7 +1,6 @@
 package traceFall
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
 	"reflect"
 	"testing"
 )

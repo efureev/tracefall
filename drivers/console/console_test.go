@@ -3,6 +3,7 @@ package console
 import (
 	"github.com/efureev/traceFall"
 	"github.com/satori/go.uuid"
+	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 )
 

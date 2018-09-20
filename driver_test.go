@@ -3,6 +3,7 @@ package traceFall
 import (
 	"errors"
 	"github.com/satori/go.uuid"
+	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 )
 

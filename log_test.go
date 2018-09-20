@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/satori/go.uuid"
+	. "github.com/smartystreets/goconvey/convey"
 	"reflect"
 	"testing"
 	"time"

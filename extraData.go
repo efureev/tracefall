@@ -27,8 +27,8 @@ func (e ExtraData) ToJSON() []byte {
 	return b
 }
 
-func (e *ExtraData) FromJSON(str string) {
-	json.Unmarshal([]byte(str), e)
+func (e *ExtraData) FromJSON(b []byte) {
+	json.Unmarshal(b, e)
 }
 
 func NewExtraData() ExtraData {

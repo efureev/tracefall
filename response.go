@@ -4,30 +4,46 @@ import (
 	"time"
 )
 
-type ResponseData map[string]interface{}
-type Response struct {
-	ID      string
-	Error   error
-	Data    ResponseData
+type Responsible interface {
+	Success() Responsible
+	//Fail() Responsible
+	//SetError(err error) Responsible
+	//GenerateID() Responsible
+	//Request() interface{}
+}
+
+//type ResponseData map[string]interface{}
+
+type BaseResponse struct {
+	ID    string
+	Error error
+	//Data    ResponseData
+	//Data    interface{}
 	Result  bool
 	Time    time.Time
 	request interface{}
 }
 
-func NewResponse(request interface{}) *Response {
-	return &Response{
-		request: request,
-		Data:    make(ResponseData),
-		Time:    time.Now(),
-	}
+type ResponseCmd struct {
+	BaseResponse
 }
 
-func (r *Response) Success() *Response {
+type ResponseThread struct {
+	BaseResponse
+	Thread Thread
+}
+
+type ResponseLog struct {
+	BaseResponse
+	Log *LogJSON
+}
+
+func (r *BaseResponse) Success() *BaseResponse {
 	r.Result = true
 	return r
 }
 
-func (r *Response) SetError(err error) *Response {
+func (r *BaseResponse) SetError(err error) *BaseResponse {
 	if err != nil {
 		r.Result = false
 		r.Error = err
@@ -35,21 +51,36 @@ func (r *Response) SetError(err error) *Response {
 
 	return r
 }
-func (r *Response) SetID(id string) *Response {
+
+func (r *BaseResponse) SetID(id string) *BaseResponse {
 	r.ID = id
 	return r
 }
 
-func (r *Response) SetData(data ResponseData) *Response {
-	r.Data = data
-	return r
+func (r *BaseResponse) ToCmd() *ResponseCmd {
+	return &ResponseCmd{*r}
 }
 
-func (r *Response) GenerateID() *Response {
+func (r *BaseResponse) ToThread(thread Thread) *ResponseThread {
+	return &ResponseThread{*r, thread}
+}
+
+func (r *BaseResponse) ToLog(log *LogJSON) *ResponseLog {
+	return &ResponseLog{*r, log}
+}
+
+func (r *BaseResponse) GenerateID() *BaseResponse {
 	r.ID = generateUUID().String()
 	return r
 }
 
-func (r *Response) Request() interface{} {
+func (r *BaseResponse) Request() interface{} {
 	return r.request
+}
+
+func NewResponse(request interface{}) *BaseResponse {
+	return (&BaseResponse{
+		request: request,
+		Time:    time.Now(),
+	}).GenerateID()
 }

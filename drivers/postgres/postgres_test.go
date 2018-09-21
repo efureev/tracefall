@@ -2,11 +2,9 @@ package postgres
 
 import (
 	"github.com/efureev/traceFall"
+	"github.com/satori/go.uuid"
 	. "github.com/smartystreets/goconvey/convey"
-	"github.com/stretchr/testify/assert"
-	"log"
 	"testing"
-	"time"
 )
 
 func TestPostgresDriverOpen(t *testing.T) {
@@ -42,7 +40,7 @@ func TestPostgresDriverOpen(t *testing.T) {
 			resp, err := db1.Truncate(``)
 
 			So(err, ShouldBeNil)
-			So(resp, ShouldHaveSameTypeAs, traceFall.Response{})
+			So(resp, ShouldHaveSameTypeAs, traceFall.ResponseCmd{})
 			So(resp.Error, ShouldBeNil)
 			So(resp.Result, ShouldBeTrue)
 			So(resp.Request(), ShouldHaveSameTypeAs, *new(string))
@@ -51,7 +49,7 @@ func TestPostgresDriverOpen(t *testing.T) {
 			respFail, err := db1.Truncate(`absent`)
 
 			So(err, ShouldBeError)
-			So(respFail, ShouldHaveSameTypeAs, traceFall.Response{})
+			So(respFail, ShouldHaveSameTypeAs, traceFall.ResponseCmd{})
 			So(respFail.Error, ShouldBeError)
 			So(respFail.Result, ShouldBeFalse)
 			So(respFail.Request(), ShouldHaveSameTypeAs, *new(string))
@@ -65,64 +63,74 @@ func TestPostgresDriverOpen(t *testing.T) {
 func TestPostgresDriverCreateAndDrop(t *testing.T) {
 	params := GetConnParams("localhost:5432", "postgres", "tracer", `postgres`, `postgres`)
 	db, err := traceFall.Open(`postgres`, params)
-	if err != nil {
-		log.Fatal(err)
-	}
 
-	l := traceFall.NewLog(`Test`)
+	Convey("Send & Drop", t, func() {
+		So(err, ShouldBeNil)
+		So(db, ShouldNotBeNil)
+		So(db, ShouldHaveSameTypeAs, &traceFall.DB{})
+		So(db.Driver(), ShouldHaveSameTypeAs, &DriverPostgres{})
 
-	resp, err := db.Send(l)
+		l := traceFall.NewLog(`Test`)
 
-	assert.Nil(t, err)
-	assert.NotNil(t, resp.ID)
-	assert.Equal(t, l.ID.String(), resp.ID)
-	assert.NotEmpty(t, resp.ID)
-	assert.IsType(t, traceFall.Response{}, resp)
-	assert.IsType(t, traceFall.ResponseData{}, resp.Data)
-	assert.IsType(t, *new(string), resp.ID)
+		resp, err := db.Send(l)
 
-	l2, err := l.CreateChild(`Test2`)
-	assert.Nil(t, err)
+		So(err, ShouldBeNil)
+		So(resp, ShouldHaveSameTypeAs, traceFall.ResponseCmd{})
+		So(resp.ID, ShouldNotBeNil)
+		So(resp.ID, ShouldHaveSameTypeAs, *new(string))
+		So(resp.ID, ShouldEqual, l.ID.String())
+		So(resp.Result, ShouldBeTrue)
 
-	l2.SetEnvironment(`prod`).Success().ThreadFinish().Tags.Add(`child`)
-	l2.Notes.Add(`step`, `note1`).
-		Add(`step`, `note2`).
-		Add(`id`, l.ID.String())
-	l2.Data.Set(`thread`, `thread: `+l.Thread.String())
+		l2, err := l.CreateChild(`Test2`)
+		So(err, ShouldBeNil)
 
-	resp2, err := db.Send(l2)
+		l2.SetEnvironment(`prod`).Success().ThreadFinish().Tags.Add(`child`)
+		l2.Notes.Add(`step`, `note1`).
+			Add(`step`, `note2`).
+			Add(`id`, l.ID.String())
+		l2.Data.Set(`thread`, `thread: `+l.Thread.String())
 
-	assert.Nil(t, err)
-	assert.Equal(t, l2.ID.String(), resp2.ID)
-	assert.Equal(t, l2.Parent.ID.String(), l.ID.String())
-	assert.NotEmpty(t, resp2.ID)
-	assert.IsType(t, traceFall.Response{}, resp2)
-	assert.IsType(t, traceFall.ResponseData{}, resp2.Data)
-	assert.IsType(t, *new(string), resp2.ID)
+		resp2, err := db.Send(l2)
 
-	lGet, err := db.Get(l.ID)
-	assert.Nil(t, err)
-	assert.IsType(t, traceFall.Response{}, lGet)
+		So(err, ShouldBeNil)
+		So(resp2, ShouldHaveSameTypeAs, traceFall.ResponseCmd{})
+		So(resp2.ID, ShouldNotBeNil)
+		So(resp2.ID, ShouldHaveSameTypeAs, *new(string))
+		So(resp2.ID, ShouldEqual, l2.ID.String())
+		So(resp2.Result, ShouldBeTrue)
 
-	assert.IsType(t, traceFall.Log{}, lGet.Data[`log`])
-	assert.True(t, lGet.Result)
-	assert.Nil(t, lGet.Error)
+		lGet, err := db.Get(l.ID)
+		So(err, ShouldBeNil)
+		So(lGet, ShouldHaveSameTypeAs, traceFall.ResponseLog{})
+		So(lGet.Log, ShouldHaveSameTypeAs, &traceFall.LogJSON{})
+		So(lGet.ID, ShouldNotBeNil)
+		So(lGet.Result, ShouldBeTrue)
+		So(lGet.Error, ShouldBeNil)
 
-	logGet := lGet.Data[`log`].(traceFall.Log)
-	assert.Equal(t, l.ID.String(), logGet.ID.String())
-	assert.Equal(t, l.Environment, `dev`)
+		So(lGet.Log.ID.String(), ShouldEqual, l.ID.String())
+		So(l.Environment, ShouldEqual, traceFall.EnvironmentDev)
 
-	resp3, err := db.RemoveByTags([]string{`child`})
-	assert.Nil(t, err)
-	assert.IsType(t, traceFall.Response{}, resp3)
-	assert.IsType(t, traceFall.ResponseData{}, resp3.Data)
-	assert.Nil(t, resp3.Error)
+		// fail
+		uid, _ := uuid.NewV4()
+		lGetFail, err2 := db.Get(uid)
+		So(err2, ShouldBeError)
+		So(lGetFail.Error, ShouldBeError)
+		So(lGetFail, ShouldHaveSameTypeAs, traceFall.ResponseLog{})
+		So(lGetFail.Result, ShouldBeFalse)
+		So(lGetFail.Log, ShouldBeNil)
 
-	resp4, err := db.RemoveThread(l.Thread)
-	assert.Nil(t, err)
-	assert.IsType(t, traceFall.Response{}, resp4)
-	assert.IsType(t, traceFall.ResponseData{}, resp4.Data)
-	assert.Nil(t, resp4.Error)
+		resp3, err := db.RemoveByTags([]string{`child`})
+		So(err, ShouldBeNil)
+		So(resp3, ShouldHaveSameTypeAs, traceFall.ResponseCmd{})
+		So(resp3.Result, ShouldBeTrue)
+		So(resp3.Error, ShouldBeNil)
+
+		So(err, ShouldBeNil)
+		So(resp3, ShouldHaveSameTypeAs, traceFall.ResponseCmd{})
+		So(resp3.Result, ShouldBeTrue)
+		So(resp3.Error, ShouldBeNil)
+	})
+
 }
 
 func TestPostgresDriverGetter(t *testing.T) {
@@ -153,11 +161,9 @@ func TestPostgresDriverGetter(t *testing.T) {
 			resp, err := db.Send(l)
 			So(err, ShouldBeNil)
 
-			So(resp, ShouldHaveSameTypeAs, traceFall.Response{})
+			So(resp, ShouldHaveSameTypeAs, traceFall.ResponseCmd{})
 			So(resp.ID, ShouldNotBeNil)
 			So(resp.ID, ShouldHaveSameTypeAs, *new(string))
-			So(resp.Data, ShouldHaveSameTypeAs, traceFall.ResponseData{})
-			//So(resp.Request(), ShouldEqual, l.String())
 
 			So(resp.Error, ShouldBeNil)
 
@@ -172,15 +178,13 @@ func TestPostgresDriverGetter(t *testing.T) {
 				Set(`thread`, `thread: `+l2.Thread.String())
 
 			resp2, err := db.Send(l2)
-
-			assert.Nil(t, err)
-			assert.Nil(t, resp2.Error)
-			assert.NotNil(t, resp2.ID)
-			assert.Equal(t, l2.ID.String(), resp2.ID)
-			assert.True(t, resp2.Result)
+			So(err, ShouldBeNil)
+			So(resp2.Error, ShouldBeNil)
+			So(resp2.ID, ShouldEqual, l2.ID.String())
+			So(resp2.Result, ShouldBeTrue)
 
 			l3, err := l.CreateChild(`Child`)
-			assert.Nil(t, err)
+			So(err, ShouldBeNil)
 
 			l3.Success().Tags.
 				Add(`child`).Add(`2`)
@@ -188,114 +192,108 @@ func TestPostgresDriverGetter(t *testing.T) {
 
 			resp3, err := db.Send(l3)
 
-			assert.Nil(t, err)
-			assert.Nil(t, resp3.Error)
-			assert.NotNil(t, resp3.ID)
-			assert.Equal(t, l3.ID.String(), resp3.ID)
-			assert.True(t, resp3.Result)
+			So(err, ShouldBeNil)
+			So(resp3.Error, ShouldBeNil)
+			So(resp3.ID, ShouldEqual, l3.ID.String())
+			So(resp3.Result, ShouldBeTrue)
 
 			l4, err := l3.CreateChild(`SubChild of Child`)
-			assert.Nil(t, err)
+			So(err, ShouldBeNil)
+
 			l4.Success().ThreadFinish().Tags.Add(`child`)
 
 			resp4, err := db.Send(l4)
 
-			assert.Nil(t, err)
-			assert.Nil(t, resp4.Error)
-			assert.NotNil(t, resp4.ID)
-			assert.Equal(t, l4.ID.String(), resp4.ID)
-			assert.True(t, resp4.Result)
+			So(err, ShouldBeNil)
+			So(resp4.Error, ShouldBeNil)
+			So(resp4.ID, ShouldEqual, l4.ID.String())
+			So(resp4.Result, ShouldBeTrue)
 
 			/// get
+			Convey("Get Log", func() {
 
-			lGet, err := db.Get(l.ID)
-			logRootGet := lGet.Data[`log`].(traceFall.Log)
+				lGet, err := db.Get(l.ID)
+				So(err, ShouldBeNil)
+				logRootGet := lGet.Log
 
-			assert.Equal(t, logRootGet.ID.String(), l.ID.String())
+				So(logRootGet.ID.String(), ShouldEqual, l.ID.String())
+				So(logRootGet.Parent, ShouldBeNil)
+				So(logRootGet.Time, ShouldEqual, l.Time.UnixNano())
+				So(logRootGet.TimeEnd, ShouldBeNil)
+				So(logRootGet.Error, ShouldEqual, l.Error)
+				So(logRootGet.App, ShouldEqual, l.App)
+				So(logRootGet.Name, ShouldEqual, l.Name)
+				So(logRootGet.Environment, ShouldEqual, l.Environment)
+				So(logRootGet.ID.String(), ShouldEqual, l.ID.String())
+				So(logRootGet.Finish, ShouldEqual, l.Finish)
+				So(logRootGet.Result, ShouldEqual, l.Result)
+				So(logRootGet.Tags, ShouldResemble, l.Tags.List())
 
-			assert.Nil(t, logRootGet.Parent)
-			assert.Equal(t, l.Time.UnixNano(), logRootGet.Time.UnixNano())
-			assert.Equal(t, l.Time.Format(time.RFC3339Nano), logRootGet.Time.Format(time.RFC3339Nano))
-			assert.Equal(t, l.TimeEnd, logRootGet.TimeEnd)
-			assert.Equal(t, l.Error, logRootGet.Error)
-			assert.Equal(t, l.App, logRootGet.App)
-			assert.Equal(t, l.Name, logRootGet.Name)
-			assert.Equal(t, l.Environment, logRootGet.Environment)
-			assert.Equal(t, l.ID.String(), logRootGet.ID.String())
-			assert.Equal(t, l.Finish, logRootGet.Finish)
-			assert.Equal(t, l.Result, logRootGet.Result)
-			assert.Equal(t, l.Tags, logRootGet.Tags)
+				l2Get, err := db.Get(l2.ID)
+				So(err, ShouldBeNil)
 
-			l2Get, err := db.Get(l2.ID)
-			log2Get := l2Get.Data[`log`].(traceFall.Log)
+				log2Get := l2Get.Log
 
-			assert.Equal(t, log2Get.ID.String(), l2.ID.String())
+				So(log2Get.ID.String(), ShouldEqual, l2.ID.String())
+				So(log2Get.Parent, ShouldNotBeNil)
+				So(*log2Get.Parent, ShouldEqual, logRootGet.ID.String())
+				So(log2Get.Time, ShouldEqual, l2.Time.UnixNano())
+				So(*log2Get.TimeEnd, ShouldEqual, l2.TimeEnd.UnixNano())
+				So(log2Get.App, ShouldEqual, l2.App)
+				So(log2Get.Name, ShouldEqual, l2.Name)
+				So(log2Get.Environment, ShouldEqual, l2.Environment)
+				So(log2Get.Finish, ShouldEqual, l2.Finish)
+				So(log2Get.Result, ShouldEqual, l2.Result)
+				So(log2Get.Tags, ShouldResemble, l2.Tags.List())
 
-			assert.NotNil(t, log2Get.Parent)
-			assert.Equal(t, log2Get.Parent.ID, logRootGet.ID)
-			assert.Equal(t, l2.Time.UnixNano(), log2Get.Time.UnixNano())
-			assert.Equal(t, l2.Time.Format(time.RFC3339Nano), log2Get.Time.Format(time.RFC3339Nano))
-			assert.Equal(t, l2.TimeEnd.UnixNano(), log2Get.TimeEnd.UnixNano())
-			assert.Equal(t, l2.TimeEnd.Format(time.RFC3339Nano), log2Get.TimeEnd.Format(time.RFC3339Nano))
-			assert.Equal(t, l2.Error, log2Get.Error)
-			assert.Equal(t, l2.App, log2Get.App)
-			assert.Equal(t, l2.Name, log2Get.Name)
-			assert.Equal(t, l2.Environment, log2Get.Environment)
-			assert.Equal(t, l2.ID.String(), log2Get.ID.String())
-			assert.Equal(t, l2.Finish, log2Get.Finish)
-			assert.Equal(t, l2.Result, log2Get.Result)
-			assert.Equal(t, l2.Tags, log2Get.Tags)
+				l3Get, err := db.Get(l3.ID)
+				So(err, ShouldBeNil)
 
-			l3Get, err := db.Get(l3.ID)
-			log3Get := l3Get.Data[`log`].(traceFall.Log)
+				log3Get := l3Get.Log
 
-			assert.Equal(t, log3Get.ID.String(), l3.ID.String())
+				So(log3Get.ID.String(), ShouldEqual, l3.ID.String())
+				So(log3Get.Parent, ShouldNotBeNil)
+				So(*log3Get.Parent, ShouldEqual, logRootGet.ID.String())
+				So(log3Get.Time, ShouldEqual, l3.Time.UnixNano())
+				So(*log3Get.TimeEnd, ShouldEqual, l3.TimeEnd.UnixNano())
+				So(log3Get.Error, ShouldBeNil)
+				So(log3Get.App, ShouldEqual, l3.App)
+				So(log3Get.Name, ShouldEqual, l3.Name)
+				So(log3Get.Environment, ShouldEqual, l3.Environment)
+				So(log3Get.Finish, ShouldEqual, l3.Finish)
+				So(log3Get.Result, ShouldEqual, l3.Result)
+				So(log3Get.Tags, ShouldResemble, l3.Tags.List())
 
-			assert.NotNil(t, log3Get.Parent)
-			assert.Equal(t, log3Get.Parent.ID, logRootGet.ID)
-			assert.Equal(t, l3.Time.UnixNano(), log3Get.Time.UnixNano())
-			assert.Equal(t, l3.Time.Format(time.RFC3339Nano), log3Get.Time.Format(time.RFC3339Nano))
-			assert.Equal(t, l3.TimeEnd.UnixNano(), log3Get.TimeEnd.UnixNano())
-			assert.Equal(t, l3.TimeEnd.Format(time.RFC3339Nano), log3Get.TimeEnd.Format(time.RFC3339Nano))
-			assert.Equal(t, l3.Error, log3Get.Error)
-			assert.Equal(t, l3.App, log3Get.App)
-			assert.Equal(t, l3.Name, log3Get.Name)
-			assert.Equal(t, l3.Environment, log3Get.Environment)
-			assert.Equal(t, l3.ID.String(), log3Get.ID.String())
-			assert.Equal(t, l3.Finish, log3Get.Finish)
-			assert.Equal(t, l3.Result, log3Get.Result)
-			assert.Equal(t, l3.Tags, log3Get.Tags)
+				l4Get, err := db.Get(l4.ID)
+				So(err, ShouldBeNil)
+				log4Get := l4Get.Log
 
-			l4Get, err := db.Get(l4.ID)
-			log4Get := l4Get.Data[`log`].(traceFall.Log)
+				So(log4Get.ID.String(), ShouldEqual, l4.ID.String())
+				So(log4Get.Parent, ShouldNotBeNil)
+				So(*log4Get.Parent, ShouldEqual, log3Get.ID.String())
 
-			assert.Equal(t, log4Get.ID.String(), l4.ID.String())
+				So(log4Get.Time, ShouldEqual, l4.Time.UnixNano())
+				So(*log4Get.TimeEnd, ShouldEqual, l4.TimeEnd.UnixNano())
+				So(log4Get.Error, ShouldBeNil)
+				So(log4Get.App, ShouldEqual, l4.App)
+				So(log4Get.Name, ShouldEqual, l4.Name)
+				So(log4Get.Environment, ShouldEqual, l4.Environment)
+				So(log4Get.Finish, ShouldEqual, l4.Finish)
+				So(log4Get.Result, ShouldEqual, l4.Result)
+				So(log4Get.Tags, ShouldResemble, l4.Tags.List())
 
-			assert.NotNil(t, log4Get.Parent)
-			assert.Equal(t, log4Get.Parent.ID, log3Get.ID)
-			assert.Equal(t, l4.Time.UnixNano(), log4Get.Time.UnixNano())
-			assert.Equal(t, l4.Time.Format(time.RFC3339Nano), log4Get.Time.Format(time.RFC3339Nano))
-			assert.Equal(t, l4.TimeEnd.UnixNano(), log4Get.TimeEnd.UnixNano())
-			assert.Equal(t, l4.TimeEnd.Format(time.RFC3339Nano), log4Get.TimeEnd.Format(time.RFC3339Nano))
-			assert.Equal(t, l4.Error, log4Get.Error)
-			assert.Equal(t, l4.App, log4Get.App)
-			assert.Equal(t, l4.Name, log4Get.Name)
-			assert.Equal(t, l4.Environment, log4Get.Environment)
-			assert.Equal(t, l4.ID.String(), log4Get.ID.String())
-			assert.Equal(t, l4.Finish, log4Get.Finish)
-			assert.Equal(t, l4.Result, log4Get.Result)
-			assert.Equal(t, l4.Tags, log4Get.Tags)
+				lThreadResp, err := db.GetThread(l4.Thread)
+				So(err, ShouldBeNil)
+				So(lThreadResp.Error, ShouldBeNil)
 
-			lThreadResp, err := db.GetThread(l4.Thread)
-			assert.Nil(t, err)
-			assert.Nil(t, lThreadResp.Error)
+				lThread := lThreadResp.Thread
+				So(len(lThread), ShouldEqual, 4)
 
-			lThread := lThreadResp.Data[`list`].([]*traceFall.Log)
-			assert.Equal(t, 4, len(lThread))
+				for _, v := range lThread {
+					So(v, ShouldHaveSameTypeAs, &traceFall.LogJSON{})
+				}
 
-			for _, v := range lThread {
-				assert.IsType(t, &traceFall.Log{}, v)
-			}
+			})
 		})
 	})
 }

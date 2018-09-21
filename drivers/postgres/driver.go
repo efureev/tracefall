@@ -44,7 +44,7 @@ func (p Params) pgConnectionStr() string {
 	)
 }
 
-func (d DriverPostgres) Send(l *traceFall.Log) (traceFall.Response, error) {
+func (d DriverPostgres) Send(l *traceFall.Log) (traceFall.ResponseCmd, error) {
 	db := d.initDb()
 	defer db.Close()
 
@@ -52,13 +52,12 @@ func (d DriverPostgres) Send(l *traceFall.Log) (traceFall.Response, error) {
 			"id", "thread", "parent", "app", "name", "time", "time_end", "env", "tags", "notes", "data", "error", "result", "finish"
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING "id";`
 
-	resp := traceFall.NewResponse(nil)
+	resp := traceFall.NewResponse(l)
 
 	stmt, err := db.Prepare(query)
 
 	if err != nil {
-		resp.SetError(err)
-		return *resp, err
+		return *resp.SetError(err).ToCmd(), err
 	}
 	defer stmt.Close()
 
@@ -93,46 +92,44 @@ func (d DriverPostgres) Send(l *traceFall.Log) (traceFall.Response, error) {
 
 	switch err := row.Scan(&id); err {
 	case sql.ErrNoRows:
-		resp.SetError(err)
-		return *resp, err
+		return *resp.SetError(err).ToCmd(), err
 	case nil:
-		resp.Success().SetID(id)
-		return *resp, err
+		return *resp.Success().SetID(id).ToCmd(), err
 	default:
 		panic(err)
 	}
 }
 
-func (d DriverPostgres) RemoveThread(id uuid.UUID) (traceFall.Response, error) {
+func (d DriverPostgres) RemoveThread(id uuid.UUID) (traceFall.ResponseCmd, error) {
 	db := d.initDb()
 	defer db.Close()
 
 	query := `DELETE FROM "` + d.params.TableName + `" WHERE thread = $1`
 
-	response := traceFall.NewResponse(nil)
+	resp := traceFall.NewResponse(id)
 
 	_, err := db.Exec(query, id.String())
 	if err != nil {
-		return *response.SetError(err), err
+		return *resp.SetError(err).ToCmd(), err
 	}
 
-	return *response.Success(), nil
+	return *resp.Success().ToCmd(), nil
 }
 
-func (d DriverPostgres) RemoveByTags(tags traceFall.Tags) (traceFall.Response, error) {
+func (d DriverPostgres) RemoveByTags(tags traceFall.Tags) (traceFall.ResponseCmd, error) {
 	db := d.initDb()
 	defer db.Close()
 
 	query := `DELETE FROM "` + d.params.TableName + `" WHERE $1 <@ "tags"`
 
-	response := traceFall.NewResponse(nil)
+	resp := traceFall.NewResponse(tags)
 
 	_, err := db.Exec(query, pq.Array(tags))
 	if err != nil {
-		return *response.SetError(err), err
+		return *resp.SetError(err).ToCmd(), err
 	}
 
-	return *response.Success(), nil
+	return *resp.Success().ToCmd(), nil
 }
 
 func (d DriverPostgres) getListResult(rows *sql.Rows) ([]*traceFall.Log, error) {
@@ -143,7 +140,7 @@ func (d DriverPostgres) getListResult(rows *sql.Rows) ([]*traceFall.Log, error) 
 			l                   = traceFall.Log{}
 			idStr, threadStr    string
 			parentPtr, errorPtr *string
-			notesStr, dataStr   string
+			notesStr, dataStr   []byte
 			ts                  int64
 			te                  *int64
 			t                   pq.StringArray
@@ -193,7 +190,52 @@ func (d DriverPostgres) getListResult(rows *sql.Rows) ([]*traceFall.Log, error) 
 	return logList, nil
 }
 
-func (d DriverPostgres) getListByThread(id uuid.UUID) ([]*traceFall.Log, error) {
+func (d DriverPostgres) getListLogJSONResult(rows *sql.Rows) ([]*traceFall.LogJSON, error) {
+	var list []*traceFall.LogJSON
+
+	for rows.Next() {
+		var (
+			l                   = traceFall.LogJSON{}
+			idStr, threadStr    string
+			parentPtr, errorPtr *string
+			notesStr, dataStr   []byte
+			ts                  int64
+			te                  *int64
+			t                   pq.StringArray
+		)
+		err := rows.Scan(&idStr, &threadStr, &parentPtr, &l.App, &l.Name, &ts, &te, &l.Environment, &t, &notesStr, &dataStr, &errorPtr, &l.Result, &l.Finish)
+		if err != nil {
+			return nil, err
+		}
+
+		uid, err := uuid.FromString(idStr)
+		if err != nil {
+			return nil, err
+		}
+		l.ID = uid
+		thid, err := uuid.FromString(threadStr)
+		if err != nil {
+			return nil, err
+		}
+		l.Thread = thid
+
+		l.Parent = parentPtr
+
+		l.Data.FromJSON(dataStr)
+		l.Notes.FromJSON(notesStr)
+		l.Tags = traceFall.Tags(t)
+
+		l.Time = ts
+		l.TimeEnd = te
+		l.Error = errorPtr
+
+		list = append(list, &l)
+	}
+
+	return list, nil
+}
+
+func (d DriverPostgres) getListByThread(id uuid.UUID) ([]*traceFall.LogJSON, error) {
 	query := `SELECT "id", "thread", "parent", "app", "name", "time", "time_end", "env", "tags", "notes", "data", "error", "result", "finish" FROM "` + d.params.TableName + `" WHERE "thread"=$1`
 
 	db := d.initDb()
@@ -205,7 +247,7 @@ func (d DriverPostgres) getListByThread(id uuid.UUID) ([]*traceFall.Log, error) 
 	}
 	defer rows.Close()
 
-	return d.getListResult(rows)
+	return d.getListLogJSONResult(rows)
 }
 
 func (d DriverPostgres) GetLastRootList(limit int) ([]*traceFall.Log, error) {
@@ -248,17 +290,18 @@ func (d DriverPostgres) GetLastThreadList(limit int) ([]*traceFall.Log, error) {
 	return d.getListResult(rows)
 }
 
-func (d DriverPostgres) GetThread(id uuid.UUID) (traceFall.Response, error) {
+func (d DriverPostgres) GetThread(id uuid.UUID) (traceFall.ResponseThread, error) {
 	resp := traceFall.NewResponse(id)
 	list, err := d.getListByThread(id)
 	if err != nil {
-		return *resp.SetError(err), err
+		return *resp.SetError(err).ToThread(traceFall.ThreadFromList(list)), err
 	}
 
-	return *resp.SetID(id.String()).SetData(map[string]interface{}{`list`: list}).Success(), nil
+	return *resp.Success().ToThread(traceFall.ThreadFromList(list)), nil
 }
 
-func (d DriverPostgres) Get(id uuid.UUID) (traceFall.Response, error) {
+/*
+func (d DriverPostgres) GetLog(id uuid.UUID) (traceFall.ResponseLog, error) {
 	query := `SELECT "id", "thread", "parent", "app", "name", "time", "time_end", "env", "tags", "notes", "data", "error", "result", "finish" FROM "` + d.params.TableName + `" WHERE "id"=$1`
 
 	var (
@@ -279,23 +322,23 @@ func (d DriverPostgres) Get(id uuid.UUID) (traceFall.Response, error) {
 	row := db.QueryRow(query, id)
 	switch err := row.Scan(&idStr, &threadStr, &parentPtr, &l.App, &l.Name, &ts, &te, &l.Environment, &t, &notesStr, &dataStr, &errorPtr, &l.Result, &l.Finish); err {
 	case sql.ErrNoRows:
-		return *resp.SetError(errors.New(`Not Found`)).Success(), nil
+		return *resp.SetError(errors.New(`not found`)).ToLog(nil), nil
 	case nil:
 		uid, err := uuid.FromString(idStr)
 		if err != nil {
-			return *resp.SetError(err), nil
+			return *resp.SetError(err).ToLog(nil), nil
 		}
 		l.ID = uid
 		thid, err := uuid.FromString(threadStr)
 		if err != nil {
-			return *resp.SetError(err), nil
+			return *resp.SetError(err).ToLog(nil), nil
 		}
 		l.Thread = thid
 
 		if parentPtr != nil {
 			pid, err := uuid.FromString(*parentPtr)
 			if err != nil {
-				return *resp.SetError(err), nil
+				return *resp.SetError(err).ToLog(nil), nil
 			}
 			l.SetParentID(pid)
 		}
@@ -315,9 +358,62 @@ func (d DriverPostgres) Get(id uuid.UUID) (traceFall.Response, error) {
 			l.Error = errors.New(*errorPtr)
 		}
 
-		return *resp.SetID(l.ID.String()).SetData(map[string]interface{}{`log`: l}).Success(), nil
+		return *resp.Success().ToLog(), nil
 	default:
-		return *resp.SetError(err), nil
+		return *resp.SetError(err).ToLog(nil), nil
+	}
+}
+*/
+
+func (d DriverPostgres) GetLog(id uuid.UUID) (traceFall.ResponseLog, error) {
+	query := `SELECT "id", "thread", "parent", "app", "name", "time", "time_end", "env", "tags", "notes", "data", "error", "result", "finish" FROM "` + d.params.TableName + `" WHERE "id"=$1`
+
+	var (
+		l                   = traceFall.LogJSON{}
+		idStr, threadStr    string
+		parentPtr, errorPtr *string
+		notesStr, dataStr   []byte
+		ts                  int64
+		te                  *int64
+		t                   pq.StringArray
+	)
+
+	db := d.initDb()
+	defer db.Close()
+
+	resp := traceFall.NewResponse(id)
+
+	row := db.QueryRow(query, id)
+	switch err := row.Scan(&idStr, &threadStr, &parentPtr, &l.App, &l.Name, &ts, &te, &l.Environment, &t, &notesStr, &dataStr, &errorPtr, &l.Result, &l.Finish); err {
+	case sql.ErrNoRows:
+		e := errors.New(`not found`)
+		return *resp.SetError(e).ToLog(nil), e
+	case nil:
+		uid, err := uuid.FromString(idStr)
+		if err != nil {
+			return *resp.SetError(err).ToLog(nil), nil
+		}
+		l.ID = uid
+		thid, err := uuid.FromString(threadStr)
+		if err != nil {
+			return *resp.SetError(err).ToLog(nil), nil
+		}
+		l.Thread = thid
+
+		l.Parent = parentPtr
+
+		l.Data.FromJSON(dataStr)
+		l.Notes.FromJSON(notesStr)
+		l.Tags = traceFall.Tags(t)
+
+		l.Time = ts
+		l.TimeEnd = te
+
+		l.Error = errorPtr
+
+		return *resp.Success().ToLog(&l), nil
+	default:
+		return *resp.SetError(err).ToLog(nil), nil
 	}
 }
 
@@ -391,7 +487,7 @@ func (d DriverPostgres) DropTable() error {
 	return nil
 }
 
-func (d DriverPostgres) Truncate(ind string) (traceFall.Response, error) {
+func (d DriverPostgres) Truncate(ind string) (traceFall.ResponseCmd, error) {
 	db := d.initDb()
 	defer db.Close()
 
@@ -404,10 +500,10 @@ func (d DriverPostgres) Truncate(ind string) (traceFall.Response, error) {
 
 	_, err := db.Exec(query)
 	if err != nil {
-		return *resp.SetError(err), err
+		return *resp.SetError(err).ToCmd(), err
 	}
 
-	return *resp.Success(), nil
+	return *resp.Success().ToCmd(), nil
 }
 
 func (d *DriverPostgres) Open(params map[string]string) (interface{}, error) {

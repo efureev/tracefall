@@ -15,21 +15,31 @@ const (
 	EnvironmentTest = `test`
 )
 
+type Logable interface {
+	Success() Logable
+	Fail(err error) Logable
+	SetParentID(id uuid.UUID) Logable
+	SetParent(parent Logable) error
+	CreateChild(name string) (Logable, error)
+	ToJSON() []byte
+	ToLogJSON() LogJSON
+}
+
 type LogJSON struct {
-	ID          uuid.UUID    `json:"id"`
-	Thread      uuid.UUID    `json:"thread"`
-	Name        string       `json:"name"`
-	App         string       `json:"app"`
-	Time        int64        `json:"time"`
-	TimeEnd     *int64       `json:"timeEnd"`
-	Result      bool         `json:"result"`
-	Finish      bool         `json:"finish"`
-	Environment string       `json:"env"`
-	Error       *string      `json:"error"`
-	Data        ExtraData    `json:"data"`
-	Notes       []*NoteGroup `json:"notes"`
-	Tags        []string     `json:"tags"`
-	Parent      *string      `json:"parent"`
+	ID          uuid.UUID     `json:"id"`
+	Thread      uuid.UUID     `json:"thread"`
+	Name        string        `json:"name"`
+	App         string        `json:"app"`
+	Time        int64         `json:"time"`
+	TimeEnd     *int64        `json:"timeEnd"`
+	Result      bool          `json:"result"`
+	Finish      bool          `json:"finish"`
+	Environment string        `json:"env"`
+	Error       *string       `json:"error"`
+	Data        ExtraData     `json:"data"`
+	Notes       NoteGroupList `json:"notes"`
+	Tags        []string      `json:"tags"`
+	Parent      *string       `json:"parent"`
 	//Step        uint16       `json:"step"`
 }
 
@@ -139,7 +149,7 @@ func (l *Log) MarshalJSON() ([]byte, error) {
 	return json.Marshal(l.ToLogJSON())
 }
 
-func (l Log) ToLogJSON() LogJSON {
+func (l Log) ToLogJSON() *LogJSON {
 	var (
 		parentID, er *string
 		te           *int64
@@ -161,7 +171,7 @@ func (l Log) ToLogJSON() LogJSON {
 		er = &e1
 	}
 
-	return LogJSON{
+	return &LogJSON{
 		ID:          l.ID,
 		Thread:      l.Thread,
 		Name:        l.Name,

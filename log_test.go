@@ -266,7 +266,7 @@ func TestLog(t *testing.T) {
 			log.Data.Set(`key`, `val`)
 			lJSON := log.ToLogJSON()
 
-			So(lJSON, ShouldHaveSameTypeAs, LogJSON{})
+			So(lJSON, ShouldHaveSameTypeAs, &LogJSON{})
 
 			So(lJSON.ID, ShouldEqual, log.ID)
 			So(lJSON.Thread, ShouldEqual, log.Thread)

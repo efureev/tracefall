@@ -39,6 +39,12 @@ func (n *NoteGroup) Clear() *NoteGroup {
 	return n
 }
 
+type NoteGroupList []*NoteGroup
+
+func (n *NoteGroupList) FromJSON(b []byte) error {
+	return json.Unmarshal(b, n)
+}
+
 type NoteGroups map[string]*NoteGroup
 
 func (n NoteGroups) Count() int {
@@ -86,8 +92,8 @@ func (n NoteGroups) ToJSON() []byte {
 	return b
 }
 
-func (n NoteGroups) prepareToJSON() []*NoteGroup {
-	var list []*NoteGroup
+func (n NoteGroups) prepareToJSON() NoteGroupList {
+	var list NoteGroupList
 	for _, ng := range n {
 		list = append(list, ng)
 	}
@@ -98,6 +104,6 @@ func (n NoteGroups) ToJSONString() string {
 	return string(n.ToJSON())
 }
 
-func (n *NoteGroups) FromJSON(str string) error {
-	return json.Unmarshal([]byte(str), n)
+func (n *NoteGroups) FromJSON(b []byte) error {
+	return json.Unmarshal(b, n)
 }

@@ -10,12 +10,12 @@ import (
 
 type Driver interface {
 	Open(map[string]string) (interface{}, error)
-	Send(log *Log) (Response, error)
-	RemoveThread(id uuid.UUID) (Response, error)
-	RemoveByTags(tags Tags) (Response, error)
-	Get(id uuid.UUID) (Response, error)
-	GetThread(id uuid.UUID) (Response, error)
-	Truncate(ind string) (Response, error)
+	Send(log *Log) (ResponseCmd, error)
+	RemoveThread(id uuid.UUID) (ResponseCmd, error)
+	RemoveByTags(tags Tags) (ResponseCmd, error)
+	GetLog(id uuid.UUID) (ResponseLog, error)
+	GetThread(id uuid.UUID) (ResponseThread, error)
+	Truncate(ind string) (ResponseCmd, error)
 }
 
 var (
@@ -63,27 +63,27 @@ func (d *DB) conn(ctx context.Context) (interface{}, error) {
 	return d.connector.Connect(ctx)
 }
 
-func (d *DB) Send(log *Log) (Response, error) {
+func (d *DB) Send(log *Log) (ResponseCmd, error) {
 	return d.connector.Driver().Send(log)
 }
 
-func (d *DB) RemoveThread(id uuid.UUID) (Response, error) {
+func (d *DB) RemoveThread(id uuid.UUID) (ResponseCmd, error) {
 	return d.connector.Driver().RemoveThread(id)
 }
 
-func (d *DB) RemoveByTags(tags Tags) (Response, error) {
+func (d *DB) RemoveByTags(tags Tags) (ResponseCmd, error) {
 	return d.connector.Driver().RemoveByTags(tags)
 }
 
-func (d *DB) Get(id uuid.UUID) (Response, error) {
-	return d.connector.Driver().Get(id)
+func (d *DB) Get(id uuid.UUID) (ResponseLog, error) {
+	return d.connector.Driver().GetLog(id)
 }
 
-func (d *DB) GetThread(id uuid.UUID) (Response, error) {
+func (d *DB) GetThread(id uuid.UUID) (ResponseThread, error) {
 	return d.connector.Driver().GetThread(id)
 }
 
-func (d *DB) Truncate(ind string) (Response, error) {
+func (d *DB) Truncate(ind string) (ResponseCmd, error) {
 	return d.connector.Driver().Truncate(ind)
 }
 

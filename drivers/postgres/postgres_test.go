@@ -293,6 +293,12 @@ func TestPostgresDriverGetter(t *testing.T) {
 					So(v, ShouldHaveSameTypeAs, &traceFall.LogJSON{})
 				}
 
+
+				respRemove, err := db.RemoveThread(l4.Thread)
+				So(err, ShouldBeNil)
+				So(respRemove.Error, ShouldBeNil)
+				So(respRemove.Result, ShouldBeTrue)
+				So(respRemove.Request(), ShouldEqual, l4.Thread)
 			})
 		})
 	})

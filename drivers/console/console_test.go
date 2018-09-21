@@ -38,6 +38,15 @@ func TestConsoleDriver(t *testing.T) {
 			So(resp.Request(), ShouldEqual, l.String())
 		})
 
+		Convey("Get Log", func() {
+			uid, _ := uuid.NewV4()
+			resp, err := db.GetLog(uid)
+			So(resp.Result, ShouldBeTrue)
+			So(resp.Log.Name, ShouldEqual, `console`)
+			So(resp.Error, ShouldBeNil)
+			So(err, ShouldBeNil)
+		})
+
 		Convey("Truncate", func() {
 			resp, err := db.Truncate(`test`)
 
@@ -59,6 +68,29 @@ func TestConsoleDriver(t *testing.T) {
 			So(resp.Result, ShouldBeTrue)
 			So(resp.Request(), ShouldHaveSameTypeAs, uuid.UUID{})
 			So(resp.Request(), ShouldEqual, id)
+		})
+
+		Convey("Get Thread", func() {
+			id, _ := uuid.NewV4()
+			resp, err := db.GetThread(id)
+
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveSameTypeAs, traceFall.ResponseThread{})
+			So(resp.Error, ShouldBeNil)
+			So(resp.Result, ShouldBeTrue)
+			So(resp.Request(), ShouldHaveSameTypeAs, uuid.UUID{})
+			So(resp.Thread, ShouldHaveSameTypeAs, traceFall.Thread{})
+			So(resp.Request(), ShouldEqual, id)
+		})
+
+		Convey("Remove By Tags", func() {
+			resp, err := db.RemoveByTags(traceFall.Tags{`tag 1`})
+
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveSameTypeAs, traceFall.ResponseCmd{})
+			So(resp.Error, ShouldBeNil)
+			So(resp.Result, ShouldBeTrue)
+			So(resp.Request(), ShouldHaveSameTypeAs, traceFall.Tags{})
 		})
 	})
 

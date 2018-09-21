@@ -99,7 +99,7 @@ func TestPostgresDriverCreateAndDrop(t *testing.T) {
 		So(resp2.ID, ShouldEqual, l2.ID.String())
 		So(resp2.Result, ShouldBeTrue)
 
-		lGet, err := db.Get(l.ID)
+		lGet, err := db.GetLog(l.ID)
 		So(err, ShouldBeNil)
 		So(lGet, ShouldHaveSameTypeAs, traceFall.ResponseLog{})
 		So(lGet.Log, ShouldHaveSameTypeAs, &traceFall.LogJSON{})
@@ -112,7 +112,7 @@ func TestPostgresDriverCreateAndDrop(t *testing.T) {
 
 		// fail
 		uid, _ := uuid.NewV4()
-		lGetFail, err2 := db.Get(uid)
+		lGetFail, err2 := db.GetLog(uid)
 		So(err2, ShouldBeError)
 		So(lGetFail.Error, ShouldBeError)
 		So(lGetFail, ShouldHaveSameTypeAs, traceFall.ResponseLog{})
@@ -212,7 +212,7 @@ func TestPostgresDriverGetter(t *testing.T) {
 			/// get
 			Convey("Get Log", func() {
 
-				lGet, err := db.Get(l.ID)
+				lGet, err := db.GetLog(l.ID)
 				So(err, ShouldBeNil)
 				logRootGet := lGet.Log
 
@@ -229,7 +229,7 @@ func TestPostgresDriverGetter(t *testing.T) {
 				So(logRootGet.Result, ShouldEqual, l.Result)
 				So(logRootGet.Tags, ShouldResemble, l.Tags.List())
 
-				l2Get, err := db.Get(l2.ID)
+				l2Get, err := db.GetLog(l2.ID)
 				So(err, ShouldBeNil)
 
 				log2Get := l2Get.Log
@@ -246,7 +246,7 @@ func TestPostgresDriverGetter(t *testing.T) {
 				So(log2Get.Result, ShouldEqual, l2.Result)
 				So(log2Get.Tags, ShouldResemble, l2.Tags.List())
 
-				l3Get, err := db.Get(l3.ID)
+				l3Get, err := db.GetLog(l3.ID)
 				So(err, ShouldBeNil)
 
 				log3Get := l3Get.Log
@@ -264,7 +264,7 @@ func TestPostgresDriverGetter(t *testing.T) {
 				So(log3Get.Result, ShouldEqual, l3.Result)
 				So(log3Get.Tags, ShouldResemble, l3.Tags.List())
 
-				l4Get, err := db.Get(l4.ID)
+				l4Get, err := db.GetLog(l4.ID)
 				So(err, ShouldBeNil)
 				log4Get := l4Get.Log
 
@@ -292,7 +292,6 @@ func TestPostgresDriverGetter(t *testing.T) {
 				for _, v := range lThread {
 					So(v, ShouldHaveSameTypeAs, &traceFall.LogJSON{})
 				}
-
 
 				respRemove, err := db.RemoveThread(l4.Thread)
 				So(err, ShouldBeNil)

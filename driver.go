@@ -75,7 +75,7 @@ func (d *DB) RemoveByTags(tags Tags) (ResponseCmd, error) {
 	return d.connector.Driver().RemoveByTags(tags)
 }
 
-func (d *DB) Get(id uuid.UUID) (ResponseLog, error) {
+func (d *DB) GetLog(id uuid.UUID) (ResponseLog, error) {
 	return d.connector.Driver().GetLog(id)
 }
 

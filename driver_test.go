@@ -81,7 +81,7 @@ func TestDriver(t *testing.T) {
 
 			Convey("Get", func() {
 				id := generateUUID()
-				r, _ := db.Get(id)
+				r, _ := db.GetLog(id)
 
 				So(err, ShouldBeError)
 				So(r, ShouldHaveSameTypeAs, ResponseLog{})

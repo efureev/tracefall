@@ -19,10 +19,10 @@ func (d DriverConsole) RemoveThread(id uuid.UUID) (traceFall.ResponseCmd, error)
 	return *traceFall.NewResponse(id).Success().ToCmd(), nil
 }
 
-func (d DriverConsole) RemoveByTags(_ traceFall.Tags) (traceFall.ResponseCmd, error) {
+func (d DriverConsole) RemoveByTags(tags traceFall.Tags) (traceFall.ResponseCmd, error) {
 	r := `Method not worked on Console Driver.. Don't use it!`
 	println(r)
-	return *traceFall.NewResponse(r).Success().ToCmd(), nil
+	return *traceFall.NewResponse(tags).Success().ToCmd(), nil
 }
 
 func (d DriverConsole) GetLog(_ uuid.UUID) (traceFall.ResponseLog, error) {
@@ -33,10 +33,10 @@ func (d DriverConsole) GetLog(_ uuid.UUID) (traceFall.ResponseLog, error) {
 func (d DriverConsole) GetThread(id uuid.UUID) (traceFall.ResponseThread, error) {
 	r := `Method not worked on Console Driver.. Don't use it!`
 	println(r)
-	return *traceFall.NewResponse(r).Success().ToThread(traceFall.Thread{}), nil
+	return *traceFall.NewResponse(id).Success().ToThread(traceFall.Thread{}), nil
 }
 
-func (d DriverConsole) Truncate(_ string) (traceFall.ResponseCmd, error) {
+func (d DriverConsole) Truncate(id string) (traceFall.ResponseCmd, error) {
 	r := `Method not worked on Console Driver.. Don't use it!`
 	println(r)
 	return *traceFall.NewResponse(r).Success().ToCmd(), nil

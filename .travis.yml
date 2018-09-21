@@ -21,7 +21,7 @@ before_script:
 
 script:
 - go test -coverprofile c.out ./...
-- go test -race -coverprofile=coverage.txt -covermode=atomic
+- go test -race -coverprofile=coverage.txt -covermode=atomic ./...
 
 after_script:
 - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT

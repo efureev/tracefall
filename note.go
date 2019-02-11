@@ -72,6 +72,14 @@ func (n NoteGroups) AddGroup(group string, notes []string) NoteGroups {
 	return n
 }
 
+func (n NoteGroups) AddNoteGroup(group *NoteGroup) NoteGroups {
+	if group != nil {
+		n[group.Label] = group
+	}
+
+	return n
+}
+
 func (n NoteGroups) Get(groupName string) *NoteGroup {
 	if lg, ok := n[groupName]; ok {
 		return lg
@@ -81,6 +89,11 @@ func (n NoteGroups) Get(groupName string) *NoteGroup {
 
 func (n NoteGroups) Remove(groupName string) NoteGroups {
 	delete(n, groupName)
+	return n
+}
+
+func (n *NoteGroups) Clear() *NoteGroups {
+	*n = NewNotesGroups()
 	return n
 }
 
@@ -105,5 +118,17 @@ func (n NoteGroups) ToJSONString() string {
 }
 
 func (n *NoteGroups) FromJSON(b []byte) error {
-	return json.Unmarshal(b, n)
+	n.Clear()
+
+	var list NoteGroupList
+	err := json.Unmarshal(b, &list)
+	if err != nil {
+		return err
+	}
+
+	for _, ng := range list {
+		n.AddNoteGroup(ng)
+	}
+
+	return nil
 }

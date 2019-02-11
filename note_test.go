@@ -1,6 +1,7 @@
 package traceFall
 
 import (
+	"encoding/json"
 	"fmt"
 	. "github.com/smartystreets/goconvey/convey"
 	"reflect"
@@ -135,6 +136,18 @@ func TestNoteGroups(t *testing.T) {
 			So(groups.Count(), ShouldBeZeroValue)
 		})
 
+		Convey("Clear", func() {
+			groups.
+				Add(`first group`, `first note`).
+				Add(`second group`, `first note`)
+
+			So(groups.Count(), ShouldEqual, 2)
+
+			groups.Clear()
+
+			So(groups.Count(), ShouldBeZeroValue)
+		})
+
 		Convey("ToJson", func() {
 			groups.
 				Add(`first group`, `first note`)
@@ -143,29 +156,34 @@ func TestNoteGroups(t *testing.T) {
 			expected := fmt.Sprintf(`[{"notes":[{"t":%d,"v":"first note"}],"label":"first group"}]`, note.Time)
 			So(groups.ToJSONString(), ShouldEqual, expected)
 		})
-		/*
-				Convey("FromJson", func() {
 
-					t1 := time.Now().UnixNano() - 2131
-					t2 := time.Now().UnixNano()
-					jsonString := fmt.Sprintf(`[{"notes":[{"t":%d,"v":"first json json note 1"},{"t":%d,"v":"first json json note 2"}],"label":"first json group"}]`, t1, t2)
+		Convey("FromJson", func() {
 
-					err:= groups.
-						FromJson(jsonString)
-					So(err, ShouldBeNil)
+			groupsToJson := NewNotesGroups()
 
-					So(groups.Count(), ShouldEqual, 1)
+			groupsToJson.
+				Add(`first group`, `first note`).
+				Add(`first group`, `second note`).
+				Add(`second group`, `three note`).
+				Add(`second group`, `three note`)
 
-					noteGroup := groups.Get(`first json group`)
-					So(noteGroup.Count(), ShouldEqual, 2)
+			jsonBytes := groupsToJson.ToJSON()
 
-					So(noteGroup.Notes[0].Time, ShouldEqual, t1)
-					So(noteGroup.Notes[1].Time, ShouldEqual, t2)
+			gl := NoteGroupList{}
+			err := json.Unmarshal(jsonBytes, &gl)
 
-					So(noteGroup.Notes[0].Note, ShouldEqual, `first json json note 1`)
-					So(noteGroup.Notes[1].Note, ShouldEqual, `first json json note 2`)
+			So(err, ShouldBeNil)
+			So(gl, ShouldHaveSameTypeAs, NoteGroupList{})
+			So(len(gl), ShouldEqual, 2)
 
+			groupsFromJson := NewNotesGroups()
+			errG := groupsFromJson.FromJSON(jsonBytes)
 
-				})*/
+			groupsFromJson.ToJSON()
+			So(errG, ShouldBeNil)
+			So(groupsFromJson.Count(), ShouldEqual, 2)
+
+			So(groupsToJson, ShouldResemble, groupsFromJson)
+		})
 	})
 }

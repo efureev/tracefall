@@ -32,8 +32,8 @@ func (e ExtraData) ToJSON() []byte {
 	return b
 }
 
-func (e *ExtraData) FromJSON(b []byte) {
-	json.Unmarshal(b, e)
+func (e *ExtraData) FromJSON(b []byte) error {
+	return json.Unmarshal(b, e)
 }
 
 func NewExtraData() ExtraData {

@@ -1,11 +1,40 @@
 package postgres
 
 import (
+	"github.com/davecgh/go-spew/spew"
 	"github.com/efureev/traceFall"
 	"github.com/satori/go.uuid"
 	. "github.com/smartystreets/goconvey/convey"
+	"os"
 	"testing"
 )
+
+func rightConnParams() map[string]string {
+	host := os.Getenv("PG_HOST")
+	if host == `` {
+		host = "127.0.0.1"
+	}
+	port := os.Getenv("PG_PORT")
+	if port == `` {
+		port = "5432"
+	}
+	user := os.Getenv("PG_USERNAME")
+	if user == `` {
+		user = "efureev"
+	}
+	db := os.Getenv("PG_DATABASE")
+	if db == `` {
+		db = "test"
+	}
+	table := os.Getenv("PG_TABLE")
+	if table == `` {
+		table = "tracer"
+	}
+
+	params := GetConnParams("localhost:"+port, db, table, user, ``)
+	spew.Dump(`DB connection params`, params)
+	return params
+}
 
 func TestPostgresDriverOpen(t *testing.T) {
 	Convey("Postgres Driver Tests", t, func() {
@@ -22,8 +51,7 @@ func TestPostgresDriverOpen(t *testing.T) {
 		})
 
 		Convey("Open Instance", func() {
-			params := GetConnParams("localhost:5432", "postgres", "tracer", `postgres`, `postgres`)
-			db, err := traceFall.Open(`postgres`, params)
+			db, err := traceFall.Open(`postgres`, rightConnParams())
 
 			So(err, ShouldBeNil)
 			So(db, ShouldNotBeNil)
@@ -61,8 +89,7 @@ func TestPostgresDriverOpen(t *testing.T) {
 }
 
 func TestPostgresDriverCreateAndDrop(t *testing.T) {
-	params := GetConnParams("localhost:5432", "postgres", "tracer", `postgres`, `postgres`)
-	db, err := traceFall.Open(`postgres`, params)
+	db, err := traceFall.Open(`postgres`, rightConnParams())
 
 	Convey("Send & Drop", t, func() {
 		So(err, ShouldBeNil)
@@ -137,7 +164,7 @@ func TestPostgresDriverGetter(t *testing.T) {
 
 	Convey("Postgres Driver Getter", t, func() {
 
-		params := GetConnParams("localhost:5432", "postgres", "tracer", `postgres`, `postgres`)
+		params := rightConnParams()
 
 		Convey("Create Params", func() {
 			So(params, ShouldHaveSameTypeAs, map[string]string{})

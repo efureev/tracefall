@@ -3,6 +3,7 @@ package traceFall
 import (
 	"errors"
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/satori/go.uuid"
 	. "github.com/smartystreets/goconvey/convey"
 	"reflect"
@@ -40,16 +41,17 @@ func TestLog(t *testing.T) {
 
 			So(log.Data, ShouldHaveSameTypeAs, ExtraData{})
 			So(log.Notes, ShouldHaveSameTypeAs, NoteGroups{})
+
+			spew.Dump(string(log.ToJSON()))
 		})
 
 		Convey("Set Name", func() {
 			So(log.Name, ShouldEqual, `test log`)
 			log.SetName(`test 2`)
 			So(log.Name, ShouldEqual, `test 2`)
-
 		})
 
-		Convey("Add Data", func() {
+		Convey("Add Tags", func() {
 			log.Tags.Add(`first`)
 			log.Tags.Add(`second`)
 

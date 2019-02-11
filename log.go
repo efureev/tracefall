@@ -100,6 +100,11 @@ func (l *Log) SetEnvironment(env string) *Log {
 	return l
 }
 
+func (l *Log) SetApplication(str string) *Log {
+	l.App = str
+	return l
+}
+
 var ErrorParentFinish = errors.New(`the Parent does not have to be the finish point`)
 var ErrorParentThreadDiff = errors.New(`the Parent Thread is different from the Thread of own log`)
 
@@ -191,7 +196,7 @@ func (l Log) ToLogJSON() *LogJSON {
 }
 
 func (l Log) String() string {
-	return fmt.Sprintf("[%s] %s", l.Time, l.Name, )
+	return fmt.Sprintf("[%s] %s", l.Time, l.Name)
 }
 
 func (l *Log) SetDefaults() *Log {

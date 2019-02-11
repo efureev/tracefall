@@ -28,6 +28,15 @@ func TestExtraParams(t *testing.T) {
 			So(params.Get(`fail`), ShouldBeNil)
 		})
 
+		Convey("Clear", func() {
+			params.Set(`key1`, `value`).Set(`key2`, `value2`)
+
+			So(len(params), ShouldEqual, 2)
+
+			So(*params.Clear(), ShouldHaveSameTypeAs, ExtraData{})
+			So(len(params), ShouldEqual, 0)
+		})
+
 		Convey("ToJson", func() {
 			params[`test`] = `value`
 			params[`dig`] = 123

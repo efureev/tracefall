@@ -12,6 +12,11 @@ func (e *ExtraData) Set(key string, val interface{}) *ExtraData {
 	return e
 }
 
+func (e *ExtraData) Clear() *ExtraData {
+	*e = NewExtraData()
+	return e
+}
+
 func (e ExtraData) Get(key string) interface{} {
 	if val, ok := e[key]; ok {
 		return val

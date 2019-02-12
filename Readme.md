@@ -18,7 +18,7 @@ Supported storage drivers:
 - Thread Line: Line of logs. Contains Logs. Thread ID = First root Log ID 
 - Log: data node. May contents other Logs as children
 
-## ScreenShort of TraceViewer based on taskFall
+## ScreenShort of TraceViewer based on traceFall
 ![screen of trace viewer](./static/screenshort.png)
 
 ## Union Logs

@@ -32,7 +32,7 @@ func rightConnParams() map[string]string {
 		table = "tracer"
 	}
 
-	params := GetConnParams("localhost:"+port, db, table, user, ``)
+	params := GetConnParams(host+":"+port, db, table, user, ``)
 	spew.Dump(`DB connection params`, params)
 	return params
 }

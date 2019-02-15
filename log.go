@@ -16,6 +16,7 @@ const (
 	EnvironmentTest = `test`
 )
 
+// Logable interface
 type Logable interface {
 	Success() Logable
 	Fail(err error) Logable
@@ -26,7 +27,7 @@ type Logable interface {
 	ToLogJSON() LogJSON
 }
 
-//
+// LogJSON struct
 type LogJSON struct {
 	ID          uuid.UUID     `json:"id"`
 	Thread      uuid.UUID     `json:"thread"`
@@ -45,7 +46,7 @@ type LogJSON struct {
 	//Step        uint16       `json:"step"`
 }
 
-//
+// Log struct
 type Log struct {
 	ID          uuid.UUID
 	Thread      uuid.UUID
@@ -67,6 +68,7 @@ type Log struct {
 	//items   []*Log
 }
 
+// SetName set log name
 func (l *Log) SetName(name string) *Log {
 	l.Name = name
 	return l
@@ -98,19 +100,25 @@ func (l *Log) Fail(err error) *Log {
 	return l.FinishTimeEnd()
 }
 
+// SetEnvironment set environment name of log
 func (l *Log) SetEnvironment(env string) *Log {
 	l.Environment = env
 	return l
 }
 
+// SetApplication set application name of log
 func (l *Log) SetApplication(str string) *Log {
 	l.App = str
 	return l
 }
 
+// ErrorParentFinish error
 var ErrorParentFinish = errors.New(`the Parent does not have to be the finish point`)
+
+// ErrorParentThreadDiff error
 var ErrorParentThreadDiff = errors.New(`the Parent Thread is different from the Thread of own log`)
 
+// SetParent set parent to log for for create Thread
 func (l *Log) SetParent(parent *Log) error {
 	if parent.Finish {
 		return ErrorParentFinish
@@ -128,12 +136,13 @@ func (l *Log) SetParent(parent *Log) error {
 	return nil
 }
 
-// Set parent ID to log
+// SetParentID set parent ID to log
 func (l *Log) SetParentID(id uuid.UUID) *Log {
 	l.Parent = &Log{ID: id, Thread: l.Thread}
 	return l
 }
 
+// CreateChild make new log and attach it to current log as child
 func (l *Log) CreateChild(name string) (*Log, error) {
 	if l.Finish {
 		return nil, ErrorParentFinish
@@ -147,16 +156,18 @@ func (l *Log) CreateChild(name string) (*Log, error) {
 	return child, nil
 }
 
+// ToJSON create json bytes from Log data
 func (l Log) ToJSON() []byte {
 	b, _ := l.MarshalJSON()
 	return b
 }
 
+// MarshalJSON marshal json
 func (l *Log) MarshalJSON() ([]byte, error) {
 	return json.Marshal(l.ToLogJSON())
 }
 
-// Return JsonLog Struct
+// ToLogJSON return JsonLog Struct
 func (l Log) ToLogJSON() *LogJSON {
 	var (
 		parentID, er *string
@@ -198,10 +209,12 @@ func (l Log) ToLogJSON() *LogJSON {
 	}
 }
 
+// String return string representation of log
 func (l Log) String() string {
 	return fmt.Sprintf("[%s] %s", l.Time, l.Name)
 }
 
+// SetDefaults set values for Log by default
 func (l *Log) SetDefaults() *Log {
 	l.App = `App`
 	l.Environment = EnvironmentDev
@@ -209,6 +222,7 @@ func (l *Log) SetDefaults() *Log {
 	return l
 }
 
+// NewLog create new Log
 func NewLog(name string) *Log {
 	id := generateUUID()
 	return (&Log{
@@ -223,11 +237,13 @@ func NewLog(name string) *Log {
 	}).SetDefaults()
 }
 
+// LogParentShadow struct
 type LogParentShadow struct {
 	ID     uuid.UUID `json:"id"`
 	Thread uuid.UUID `json:"thread"`
 }
 
+// ToShadow create new shadow struct of log
 func (l Log) ToShadow() *LogParentShadow {
 	return &LogParentShadow{l.ID, l.Thread}
 }
@@ -243,6 +259,7 @@ func (l *Log) ParentFromShadow(shadow *LogParentShadow) *Log {
 
 const rootLevel int = 0
 
+// GetLevel return depth level of Log in thread
 func (l *Log) GetLevel() int {
 	current := l
 	level := rootLevel

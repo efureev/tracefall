@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+//
 type Responsible interface {
 	Success() Responsible
 	//Fail() Responsible
@@ -14,6 +15,7 @@ type Responsible interface {
 
 //type ResponseData map[string]interface{}
 
+//
 type BaseResponse struct {
 	ID      string
 	Error   error

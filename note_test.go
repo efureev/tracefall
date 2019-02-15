@@ -1,12 +1,13 @@
-package traceFall
+package tracefall
 
 import (
 	"encoding/json"
 	"fmt"
-	. "github.com/smartystreets/goconvey/convey"
 	"reflect"
 	"testing"
 	"time"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestNote(t *testing.T) {

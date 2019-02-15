@@ -1,4 +1,4 @@
-package traceFall
+package tracefall
 
 import (
 	"time"
@@ -15,10 +15,8 @@ type Responsible interface {
 //type ResponseData map[string]interface{}
 
 type BaseResponse struct {
-	ID    string
-	Error error
-	//Data    ResponseData
-	//Data    interface{}
+	ID      string
+	Error   error
 	Result  bool
 	Time    time.Time
 	request interface{}

@@ -1,9 +1,9 @@
-[![Build Status](https://travis-ci.org/efureev/traceFall.svg?branch=master)](https://travis-ci.org/efureev/traceFall)
-[![Version](https://img.shields.io/badge/version-1.0.2-blueviolet.svg)](https://travis-ci.org/efureev/traceFall)
-[![Maintainability](https://api.codeclimate.com/v1/badges/c933f06740177611ff5a/maintainability)](https://codeclimate.com/github/efureev/traceFall/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/c933f06740177611ff5a/test_coverage)](https://codeclimate.com/github/efureev/traceFall/test_coverage)
-[![Go Report Card](https://goreportcard.com/badge/github.com/efureev/traceFall)](https://goreportcard.com/report/github.com/efureev/traceFall)
-[![codecov](https://codecov.io/gh/efureev/traceFall/branch/master/graph/badge.svg)](https://codecov.io/gh/efureev/traceFall)
+[![Build Status](https://travis-ci.org/efureev/tracefall.svg?branch=master)](https://travis-ci.org/efureev/tracefall)
+[![Version](https://img.shields.io/badge/version-1.0.2-blueviolet.svg)](https://travis-ci.org/efureev/tracefall)
+[![Maintainability](https://api.codeclimate.com/v1/badges/c933f06740177611ff5a/maintainability)](https://codeclimate.com/github/efureev/tracefall/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/c933f06740177611ff5a/test_coverage)](https://codeclimate.com/github/efureev/tracefall/test_coverage)
+[![Go Report Card](https://goreportcard.com/badge/github.com/efureev/tracefall)](https://goreportcard.com/report/github.com/efureev/tracefall)
+[![codecov](https://codecov.io/gh/efureev/tracefall/branch/master/graph/badge.svg)](https://codecov.io/gh/efureev/tracefall)
 
 ## Info
 Package for sending logs to the storage, for the subsequent withdrawal of the traceViewer service and display there.
@@ -24,19 +24,19 @@ Supported storage drivers:
 ## Union Logs
 Independent Logs may union to one log thread via `LogParentShadow`
 ```go
-logChild := traceFall.NewLog(`prepare Scrapping`).SetApplication(`micro.1`)
+logChild := tracefall.NewLog(`prepare Scrapping`).SetApplication(`micro.1`)
 logChild.ParentFromShadow(job.LogShadow)
 ```
 #### Example
 `microservice #1`
 ```go
-logParent := traceFall.NewLog(`Start`)
+logParent := tracefall.NewLog(`Start`)
 // send to RabbitMQ job with logParent.ToShadow() data
 ```
 `microservice #2`
 ```go
 // get from RabbitMQ job with logParent.ToShadow() data
-logChild := traceFall.NewLog(`prepare Scrapping`).SetApplication(`micro.2`)
+logChild := tracefall.NewLog(`prepare Scrapping`).SetApplication(`micro.2`)
 logChild.ParentFromShadow(job.LogShadow)
 ```
 Now `logChild` has parent `logParent`
@@ -45,14 +45,14 @@ Now `logChild` has parent `logParent`
 
 **Create new Log node**
 ```go
-import "github.com/efureev/traceFall"
+import "github.com/efureev/tracefall"
 // ...
-log := traceFall.NewLog(`test log`)
+log := tracefall.NewLog(`test log`)
 ```
 
 **Finish log**
 ```go
-log := traceFall.NewLog(`test log`)
+log := tracefall.NewLog(`test log`)
 
 // with fail result
 log.Fail(err error)
@@ -71,7 +71,7 @@ log.ThreadFinish()
 
 **Add extra data to Log**
 ```go
-log := traceFall.NewLog(`test log`)
+log := tracefall.NewLog(`test log`)
 log.Data.Set(`url`, `http://google.com`).Set(`service`, service.Name)
 ```
 
@@ -85,11 +85,11 @@ log.Notes.AddGroup(`send to redis`, [`ping`,`processing`,`done`])
 
 **Sending logs to storage**
 ```go
-var logStorage *traceFall.DB
+var logStorage *tracefall.DB
 func tracerLogStart(tracerHost, tracerUser, tracerPassword, tracerDbName, tracerTable string) {
 	var err error
 
-	logStorage, err = traceFall.Open(`postgres`, postgres.GetConnParams(tracerHost, tracerDbName, tracerTable, tracerUser, tracerPassword))
+	logStorage, err = tracefall.Open(`postgres`, postgres.GetConnParams(tracerHost, tracerDbName, tracerTable, tracerUser, tracerPassword))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -98,7 +98,7 @@ func send(m) {
 	if logStorage == nil {
         return
     }
-	_, err := logStorage.Send(m *traceFall.Log)
+	_, err := logStorage.Send(m *tracefall.Log)
     if err != nil {
         fmt.Println(`[error sent to trace logs] -> ` + err.Error())
     }

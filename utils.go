@@ -1,6 +1,6 @@
-package traceFall
+package tracefall
 
-import "github.com/satori/go.uuid"
+import uuid "github.com/satori/go.uuid"
 
 func generateUUID() uuid.UUID {
 	uid, err := uuid.NewV4()

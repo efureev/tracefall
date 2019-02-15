@@ -1,11 +1,12 @@
-package traceFall
+package tracefall
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/satori/go.uuid"
 	"time"
+
+	uuid "github.com/satori/go.uuid"
 )
 
 // Environments
@@ -25,6 +26,7 @@ type Logable interface {
 	ToLogJSON() LogJSON
 }
 
+//
 type LogJSON struct {
 	ID          uuid.UUID     `json:"id"`
 	Thread      uuid.UUID     `json:"thread"`
@@ -43,6 +45,7 @@ type LogJSON struct {
 	//Step        uint16       `json:"step"`
 }
 
+//
 type Log struct {
 	ID          uuid.UUID
 	Thread      uuid.UUID
@@ -125,6 +128,7 @@ func (l *Log) SetParent(parent *Log) error {
 	return nil
 }
 
+// Set parent ID to log
 func (l *Log) SetParentID(id uuid.UUID) *Log {
 	l.Parent = &Log{ID: id, Thread: l.Thread}
 	return l
@@ -140,8 +144,6 @@ func (l *Log) CreateChild(name string) (*Log, error) {
 	child.Environment = l.Environment
 	child.Parent = l
 
-	//l.items = append(l.items, child)
-
 	return child, nil
 }
 
@@ -154,6 +156,7 @@ func (l *Log) MarshalJSON() ([]byte, error) {
 	return json.Marshal(l.ToLogJSON())
 }
 
+// Return JsonLog Struct
 func (l Log) ToLogJSON() *LogJSON {
 	var (
 		parentID, er *string
@@ -229,6 +232,7 @@ func (l Log) ToShadow() *LogParentShadow {
 	return &LogParentShadow{l.ID, l.Thread}
 }
 
+// ParentFromShadow return Parent's ID from LogShadow
 func (l *Log) ParentFromShadow(shadow *LogParentShadow) *Log {
 	if shadow != nil {
 		l.Parent = &Log{ID: shadow.ID, Thread: shadow.Thread}
@@ -252,32 +256,3 @@ func (l *Log) GetLevel() int {
 
 	return level
 }
-
-/*
-
-func (l Log) BuildTreeFromChild() string {
-
-	current := l
-	level := l.GetLevel()
-	var text string
-
-	for {
-		offset := strings.Repeat("\t", level)
-
-		var parentId string
-		if current.Parent != nil {
-			parentId = current.Parent.Id.String()
-		}
-		t := fmt.Sprintf("{{offset}}- id: %s\n{{offset}}- time: %s\n{{offset}}- action: %s\n{{offset}}- level: %d\n{{offset}}- parent: %s\n", current.Id, current.Time, current.Action, level, parentId)
-		text += strings.Replace(t, `{{offset}}`, offset, -1)
-
-		if current.Parent == nil {
-			break
-		}
-		level--
-		current = *current.Parent
-	}
-
-	return text
-}
-*/

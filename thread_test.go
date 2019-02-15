@@ -1,8 +1,9 @@
-package traceFall
+package tracefall
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestThread(t *testing.T) {

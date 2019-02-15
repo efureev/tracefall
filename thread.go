@@ -1,4 +1,4 @@
-package traceFall
+package tracefall
 
 type Thread []*LogJSON
 

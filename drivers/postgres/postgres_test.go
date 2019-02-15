@@ -1,12 +1,13 @@
 package postgres
 
 import (
-	"github.com/davecgh/go-spew/spew"
-	"github.com/efureev/traceFall"
-	"github.com/satori/go.uuid"
-	. "github.com/smartystreets/goconvey/convey"
 	"os"
 	"testing"
+
+	"github.com/davecgh/go-spew/spew"
+	"github.com/efureev/tracefall"
+	uuid "github.com/satori/go.uuid"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func rightConnParams() map[string]string {
@@ -41,21 +42,21 @@ func TestPostgresDriverOpen(t *testing.T) {
 		Convey("Open wrong db", func() {
 			So(func() {
 				params := GetConnParams("localhost:5432", "postgres", "tracerFake", `root`, ``)
-				traceFall.Open(`postgres`, params)
+				tracefall.Open(`postgres`, params)
 			}, ShouldPanic)
 
 			So(func() {
 				params := GetConnParams("localhost:54321", "postgres", "tracer", `postgres`, `postgres`)
-				traceFall.Open(`postgres`, params)
+				tracefall.Open(`postgres`, params)
 			}, ShouldPanic)
 		})
 
 		Convey("Open Instance", func() {
-			db, err := traceFall.Open(`postgres`, rightConnParams())
+			db, err := tracefall.Open(`postgres`, rightConnParams())
 
 			So(err, ShouldBeNil)
 			So(db, ShouldNotBeNil)
-			So(db, ShouldHaveSameTypeAs, &traceFall.DB{})
+			So(db, ShouldHaveSameTypeAs, &tracefall.DB{})
 			So(db.Driver(), ShouldHaveSameTypeAs, &DriverPostgres{})
 
 			db1 := db.Driver().(*DriverPostgres)
@@ -68,7 +69,7 @@ func TestPostgresDriverOpen(t *testing.T) {
 			resp, err := db1.Truncate(``)
 
 			So(err, ShouldBeNil)
-			So(resp, ShouldHaveSameTypeAs, traceFall.ResponseCmd{})
+			So(resp, ShouldHaveSameTypeAs, tracefall.ResponseCmd{})
 			So(resp.Error, ShouldBeNil)
 			So(resp.Result, ShouldBeTrue)
 			So(resp.Request(), ShouldHaveSameTypeAs, *new(string))
@@ -77,7 +78,7 @@ func TestPostgresDriverOpen(t *testing.T) {
 			respFail, err := db1.Truncate(`absent`)
 
 			So(err, ShouldBeError)
-			So(respFail, ShouldHaveSameTypeAs, traceFall.ResponseCmd{})
+			So(respFail, ShouldHaveSameTypeAs, tracefall.ResponseCmd{})
 			So(respFail.Error, ShouldBeError)
 			So(respFail.Result, ShouldBeFalse)
 			So(respFail.Request(), ShouldHaveSameTypeAs, *new(string))
@@ -89,20 +90,20 @@ func TestPostgresDriverOpen(t *testing.T) {
 }
 
 func TestPostgresDriverCreateAndDrop(t *testing.T) {
-	db, err := traceFall.Open(`postgres`, rightConnParams())
+	db, err := tracefall.Open(`postgres`, rightConnParams())
 
 	Convey("Send & Drop", t, func() {
 		So(err, ShouldBeNil)
 		So(db, ShouldNotBeNil)
-		So(db, ShouldHaveSameTypeAs, &traceFall.DB{})
+		So(db, ShouldHaveSameTypeAs, &tracefall.DB{})
 		So(db.Driver(), ShouldHaveSameTypeAs, &DriverPostgres{})
 
-		l := traceFall.NewLog(`Test`)
+		l := tracefall.NewLog(`Test`)
 
 		resp, err := db.Send(l)
 
 		So(err, ShouldBeNil)
-		So(resp, ShouldHaveSameTypeAs, traceFall.ResponseCmd{})
+		So(resp, ShouldHaveSameTypeAs, tracefall.ResponseCmd{})
 		So(resp.ID, ShouldNotBeNil)
 		So(resp.ID, ShouldHaveSameTypeAs, *new(string))
 		So(resp.ID, ShouldEqual, l.ID.String())
@@ -120,7 +121,7 @@ func TestPostgresDriverCreateAndDrop(t *testing.T) {
 		resp2, err := db.Send(l2)
 
 		So(err, ShouldBeNil)
-		So(resp2, ShouldHaveSameTypeAs, traceFall.ResponseCmd{})
+		So(resp2, ShouldHaveSameTypeAs, tracefall.ResponseCmd{})
 		So(resp2.ID, ShouldNotBeNil)
 		So(resp2.ID, ShouldHaveSameTypeAs, *new(string))
 		So(resp2.ID, ShouldEqual, l2.ID.String())
@@ -128,32 +129,32 @@ func TestPostgresDriverCreateAndDrop(t *testing.T) {
 
 		lGet, err := db.GetLog(l.ID)
 		So(err, ShouldBeNil)
-		So(lGet, ShouldHaveSameTypeAs, traceFall.ResponseLog{})
-		So(lGet.Log, ShouldHaveSameTypeAs, &traceFall.LogJSON{})
+		So(lGet, ShouldHaveSameTypeAs, tracefall.ResponseLog{})
+		So(lGet.Log, ShouldHaveSameTypeAs, &tracefall.LogJSON{})
 		So(lGet.ID, ShouldNotBeNil)
 		So(lGet.Result, ShouldBeTrue)
 		So(lGet.Error, ShouldBeNil)
 
 		So(lGet.Log.ID.String(), ShouldEqual, l.ID.String())
-		So(l.Environment, ShouldEqual, traceFall.EnvironmentDev)
+		So(l.Environment, ShouldEqual, tracefall.EnvironmentDev)
 
 		// fail
 		uid, _ := uuid.NewV4()
 		lGetFail, err2 := db.GetLog(uid)
 		So(err2, ShouldBeError)
 		So(lGetFail.Error, ShouldBeError)
-		So(lGetFail, ShouldHaveSameTypeAs, traceFall.ResponseLog{})
+		So(lGetFail, ShouldHaveSameTypeAs, tracefall.ResponseLog{})
 		So(lGetFail.Result, ShouldBeFalse)
 		So(lGetFail.Log, ShouldBeNil)
 
 		resp3, err := db.RemoveByTags([]string{`child`})
 		So(err, ShouldBeNil)
-		So(resp3, ShouldHaveSameTypeAs, traceFall.ResponseCmd{})
+		So(resp3, ShouldHaveSameTypeAs, tracefall.ResponseCmd{})
 		So(resp3.Result, ShouldBeTrue)
 		So(resp3.Error, ShouldBeNil)
 
 		So(err, ShouldBeNil)
-		So(resp3, ShouldHaveSameTypeAs, traceFall.ResponseCmd{})
+		So(resp3, ShouldHaveSameTypeAs, tracefall.ResponseCmd{})
 		So(resp3.Result, ShouldBeTrue)
 		So(resp3.Error, ShouldBeNil)
 	})
@@ -170,25 +171,25 @@ func TestPostgresDriverGetter(t *testing.T) {
 			So(params, ShouldHaveSameTypeAs, map[string]string{})
 		})
 
-		db, err := traceFall.Open(`postgres`, params)
+		db, err := tracefall.Open(`postgres`, params)
 
 		Convey("Open Instance", func() {
 			So(err, ShouldBeNil)
 			So(db, ShouldNotBeNil)
-			So(db, ShouldHaveSameTypeAs, &traceFall.DB{})
+			So(db, ShouldHaveSameTypeAs, &tracefall.DB{})
 			So(db.Driver(), ShouldHaveSameTypeAs, &DriverPostgres{})
 		})
 
-		l := traceFall.NewLog(`Test Root`)
+		l := tracefall.NewLog(`Test Root`)
 		Convey("Create Log", func() {
-			So(l, ShouldHaveSameTypeAs, &traceFall.Log{})
+			So(l, ShouldHaveSameTypeAs, &tracefall.Log{})
 		})
 
 		Convey("Send Log", func() {
 			resp, err := db.Send(l)
 			So(err, ShouldBeNil)
 
-			So(resp, ShouldHaveSameTypeAs, traceFall.ResponseCmd{})
+			So(resp, ShouldHaveSameTypeAs, tracefall.ResponseCmd{})
 			So(resp.ID, ShouldNotBeNil)
 			So(resp.ID, ShouldHaveSameTypeAs, *new(string))
 
@@ -317,7 +318,7 @@ func TestPostgresDriverGetter(t *testing.T) {
 				So(len(lThread), ShouldEqual, 4)
 
 				for _, v := range lThread {
-					So(v, ShouldHaveSameTypeAs, &traceFall.LogJSON{})
+					So(v, ShouldHaveSameTypeAs, &tracefall.LogJSON{})
 				}
 
 				respRemove, err := db.RemoveThread(l4.Thread)

@@ -3,18 +3,19 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/efureev/traceFall"
-	"github.com/efureev/traceFall/drivers/postgres"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/efureev/tracefall"
+	"github.com/efureev/tracefall/drivers/postgres"
 )
 
 var X *Hub
 
 type Hub struct {
-	ToTraceLog chan *traceFall.Log
+	ToTraceLog chan *tracefall.Log
 }
 
 func init() {
@@ -24,17 +25,17 @@ func init() {
 
 func newHub() *Hub {
 	X = &Hub{
-		ToTraceLog: make(chan *traceFall.Log),
+		ToTraceLog: make(chan *tracefall.Log),
 	}
 	return X
 }
 
-var logStorage *traceFall.DB
+var logStorage *tracefall.DB
 
 func tracerLogStart(tracerHost, tracerUser, tracerPassword, tracerDbName, tracerTable string) {
 	var err error
 
-	logStorage, err = traceFall.Open(`postgres`, postgres.GetConnParams(tracerHost, tracerDbName, tracerTable, tracerUser, tracerPassword))
+	logStorage, err = tracefall.Open(`postgres`, postgres.GetConnParams(tracerHost, tracerDbName, tracerTable, tracerUser, tracerPassword))
 	if err != nil {
 		panic(err)
 	}
@@ -61,7 +62,7 @@ func listen() {
 }
 
 func runWork() {
-	logParent := traceFall.NewLog(`Start`).SetApplication(`micro#1`)
+	logParent := tracefall.NewLog(`Start`).SetApplication(`micro#1`)
 	logParent.Success().Data.Set(`key1`, `zvalue`)
 	logParent.Tags.Add(`micro1`).Add(`root`)
 
@@ -88,7 +89,7 @@ func runWork() {
 		shadow := logChildren.ToShadow()
 
 		// new log form other service:
-		logOther := traceFall.NewLog(`Resulting`).SetApplication(`micro#2`)
+		logOther := tracefall.NewLog(`Resulting`).SetApplication(`micro#2`)
 		logOther.Tags.Add(`micro2`).Add(`finish`)
 		logOther.ParentFromShadow(shadow).Success().ThreadFinish()
 		X.ToTraceLog <- logOther

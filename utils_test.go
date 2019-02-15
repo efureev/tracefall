@@ -1,9 +1,10 @@
-package traceFall
+package tracefall
 
 import (
-	"github.com/satori/go.uuid"
-	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+
+	uuid "github.com/satori/go.uuid"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestGenerateUUID(t *testing.T) {

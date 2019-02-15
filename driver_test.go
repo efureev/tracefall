@@ -1,10 +1,11 @@
-package traceFall
+package tracefall
 
 import (
 	"errors"
-	"github.com/satori/go.uuid"
-	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+
+	uuid "github.com/satori/go.uuid"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 type DriverTest struct{}

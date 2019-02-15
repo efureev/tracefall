@@ -1,11 +1,12 @@
-package traceFall
+package tracefall
 
 import (
 	"context"
 	"fmt"
-	"github.com/satori/go.uuid"
 	"sort"
 	"sync"
+
+	uuid "github.com/satori/go.uuid"
 )
 
 type Driver interface {

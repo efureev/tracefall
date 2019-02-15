@@ -1,14 +1,15 @@
-package traceFall
+package tracefall
 
 import (
 	"errors"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
-	"github.com/satori/go.uuid"
-	. "github.com/smartystreets/goconvey/convey"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/davecgh/go-spew/spew"
+	uuid "github.com/satori/go.uuid"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestLog(t *testing.T) {

@@ -1,9 +1,10 @@
-package traceFall
+package tracefall
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
 	"reflect"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestExtraParams(t *testing.T) {
